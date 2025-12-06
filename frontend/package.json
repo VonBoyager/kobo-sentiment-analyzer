@@ -1,0 +1,33 @@
+{
+  "name": "kobo-sentiment-analyzer-frontend",
+  "version": "1.0.0",
+  "description": "Frontend application for Kobo Sentiment Analyzer project",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "python -m http.server 3000",
+    "lint": "eslint src --ext .js",
+    "lint:fix": "eslint src --ext .js --fix",
+    "format": "prettier --write src/**/*.{js,css,html}",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": ["frontend", "web", "javascript", "sentiment-analysis", "django"],
+  "author": "Kobo Team",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}

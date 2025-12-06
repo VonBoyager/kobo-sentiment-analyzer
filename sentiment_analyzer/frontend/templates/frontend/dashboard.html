@@ -1,0 +1,992 @@
+{% extends 'frontend/index.html' %}
+
+{% block title %}Dashboard - Kobo{% endblock %}
+
+{% block header %}Dashboard - Welcome back, {{ user.username }}!{% endblock %}
+
+{% block content %}
+<!-- React Loading Components -->
+<div id="loading-root"></div>
+
+<div class="dashboard-welcome">
+    <div class="welcome-section">
+        <h2>Your Dashboard</h2>
+        <p>Welcome to your Kobo dashboard. Here you can manage your data, analyze sentiment, and access all the features of the platform.</p>
+    </div>
+    
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <div class="card-icon">📋</div>
+            <h3>Questionnaire</h3>
+            <p>Complete the employee satisfaction questionnaire</p>
+            <a href="{% url 'frontend:questionnaire_intro' %}" class="btn btn-primary">Take Questionnaire</a>
+        </div>
+        
+        <div class="dashboard-card">
+            <div class="card-icon">📤</div>
+            <h3>Upload Data</h3>
+            <p>Upload CSV data for analysis</p>
+            <a href="{% url 'frontend:upload_data' %}" class="btn btn-secondary">Upload Data</a>
+        </div>
+        
+        <div class="dashboard-card">
+            <div class="card-icon">⚙️</div>
+            <h3>Settings</h3>
+            <p>Manage your account and preferences</p>
+            <a href="{% url 'frontend:accounts_settings' %}" class="btn btn-secondary">Settings</a>
+        </div>
+    </div>
+</div>
+
+<!-- Section Performance Summary -->
+{% if section_performance_summary %}
+<section id="section-performance-summary">
+    <div class="section-performance-card {% if section_performance_summary.all_below_average %}all-weak{% endif %}">
+        <h3>📈 Company Performance Overview</h3>
+        <div class="performance-message">
+            <p class="performance-text">{{ section_performance_summary.message }}</p>
+        </div>
+        
+        {% if section_performance_summary.strong_sections_with_scores %}
+        <div class="strong-sections">
+            <h4>💪 Strong Sections (Above Average):</h4>
+            <div class="sections-list">
+                {% for section_name, score in section_performance_summary.strong_sections_with_scores %}
+                <div class="section-badge strong">
+                    <span class="section-name">{{ section_name }}</span>
+                    <span class="section-score">{{ score|floatformat:2 }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if section_performance_summary.weak_sections_with_scores %}
+        <div class="weak-sections">
+            <h4>⚠️ Weak Sections (Below Average):</h4>
+            <div class="sections-list">
+                {% for section_name, score in section_performance_summary.weak_sections_with_scores %}
+                <div class="section-badge weak">
+                    <span class="section-name">{{ section_name }}</span>
+                    <span class="section-score">{{ score|floatformat:2 }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Correlation Insights -->
+{% if has_correlations %}
+{% if positive_correlations or negative_correlations %}
+<div class="correlation-insights">
+    <h3>Key Insights</h3>
+    
+    <div class="correlation-grid">
+        <!-- Negative Correlations -->
+        {% if negative_correlations %}
+        <div class="correlation-section negative">
+            <div class="correlation-header">
+                <h4>⚠️ Topics Correlating with Negative Sentiment</h4>
+            </div>
+            <div class="correlation-list">
+                {% for item in negative_correlations %}
+                <div class="correlation-item negative">
+                    <div class="correlation-main">
+                        <div class="topic-keywords">
+                            {% if item.keywords_list %}
+                                {% for word in item.keywords_list %}
+                                    <span class="keyword-tag negative">{{ word }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="no-keywords">No keywords available</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="correlation-stats">
+                        <span class="correlation-score negative">{{ item.correlation.correlation_score|floatformat:3 }}</span>
+                        <span class="sample-size">(n={{ item.correlation.sample_size }})</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="correlation-summary">
+        <div class="summary-card" style="background: #f8f9fa !important; color: #000000 !important;">
+            <style>
+                .correlation-summary .summary-card,
+                .correlation-summary .summary-card *,
+                .correlation-summary .summary-card h1,
+                .correlation-summary .summary-card h2,
+                .correlation-summary .summary-card h3,
+                .correlation-summary .summary-card h4,
+                .correlation-summary .summary-card h5,
+                .correlation-summary .summary-card h6,
+                .correlation-summary .summary-card p,
+                .correlation-summary .summary-card span,
+                .correlation-summary .summary-card div,
+                .correlation-summary .summary-card strong,
+                .correlation-summary .summary-card em,
+                .correlation-summary .summary-card small,
+                .correlation-summary .summary-card label {
+                    color: #000000 !important;
+                }
+            </style>
+            
+            <!-- Strengths -->
+            {% if strengths_data %}
+            <div class="strengths-section" style="color: #000000 !important;">
+                <h6 style="color: #000000 !important;">💪 Strengths</h6>
+                <div class="topic-card" style="color: #000000 !important;">
+                    <div class="topic-header" style="color: #000000 !important;">
+                        <h4 style="color: #000000 !important;">{{ strengths_data.section_name }}</h4>
+                    </div>
+                    <div class="topic-keywords" style="color: #000000 !important;">
+                        <strong style="color: #000000 !important;">Key Topics:</strong> <span style="color: #000000 !important;">{{ strengths_data.topic_keywords }}</span>
+                    </div>
+                    <div class="sentiment-indicator" style="color: #000000 !important;">
+                        <span class="sentiment-label" style="color: #000000 !important;">
+                            Sentiment: 
+                            {% if strengths_data.sentiment_score > 0.1 %}
+                                <span class="positive" style="color: #000000 !important;">😊 Positive</span>
+                            {% elif strengths_data.sentiment_score < -0.1 %}
+                                <span class="negative" style="color: #000000 !important;">😞 Negative</span>
+                            {% else %}
+                                <span class="neutral" style="color: #000000 !important;">😐 Neutral</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="response-count" style="color: #666 !important;">
+                        <small style="color: #666 !important;">Based on {{ strengths_data.response_count }} response{{ strengths_data.response_count|pluralize }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Weaknesses -->
+            {% if weaknesses_data %}
+            <div class="weaknesses-section" style="color: #000000 !important;">
+                <h6 style="color: #000000 !important;">⚠️ Weaknesses</h6>
+                <div class="topic-card" style="color: #000000 !important;">
+                    <div class="topic-header" style="color: #000000 !important;">
+                        <h4 style="color: #000000 !important;">{{ weaknesses_data.section_name }}</h4>
+                    </div>
+                    <div class="topic-keywords" style="color: #000000 !important;">
+                        <strong style="color: #000000 !important;">Key Topics:</strong> <span style="color: #000000 !important;">{{ weaknesses_data.topic_keywords }}</span>
+                    </div>
+                    <div class="sentiment-indicator" style="color: #000000 !important;">
+                        <span class="sentiment-label" style="color: #000000 !important;">
+                            Sentiment: 
+                            {% if weaknesses_data.sentiment_score > 0.1 %}
+                                <span class="positive" style="color: #000000 !important;">😊 Positive</span>
+                            {% elif weaknesses_data.sentiment_score < -0.1 %}
+                                <span class="negative" style="color: #000000 !important;">😞 Negative</span>
+                            {% else %}
+                                <span class="neutral" style="color: #000000 !important;">😐 Neutral</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="response-count" style="color: #666 !important;">
+                        <small style="color: #666 !important;">Based on {{ weaknesses_data.response_count }} response{{ weaknesses_data.response_count|pluralize }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if not strengths_data and not weaknesses_data %}
+            <p style="color: #000000 !important;">No strengths or weaknesses data available. Train models to generate insights.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- Dataset Summary -->
+<section id="ml-dashboard">
+    <div class="dataset-summary">
+        <h3>📊 Your Dataset Summary</h3>
+        <div class="summary-stats">
+            <div class="stat-item">
+                <span class="stat-number">{{ total_responses }}</span>
+                <span class="stat-label">Total Responses</span>
+                {% if has_similar_data %}
+                    <small class="stat-note">(includes similar usernames)</small>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if sentiment_breakdown %}
+        <div class="sentiment-breakdown">
+            <h4>Sentiment Distribution</h4>
+            <div class="sentiment-bars">
+                {% for sentiment, count in sentiment_breakdown.items %}
+                <div class="sentiment-bar">
+                    <span class="sentiment-label">{{ sentiment|title }}</span>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: {% widthratio count total_responses 100 %}%"></div>
+                        <span class="bar-count">{{ count }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- VADER Sentiment Pie Charts -->
+    <div class="vader-charts-section">
+        <h3>📊 Feedback</h3>
+        
+        <!-- Overall VADER Sentiment Pie Chart -->
+        <div class="chart-container overall-chart">
+            <h4>Overall Sentiment Distribution</h4>
+            <canvas id="overallVaderChart" width="400" height="400"></canvas>
+        </div>
+        
+    </div>
+    
+
+    <!-- Section Impact Analysis (Standalone Section) -->
+    {% if feedback_summary and feedback_summary.section_importance %}
+    <div class="section-importance-standalone">
+        <h3>📊 Section Impact Analysis</h3>
+        <p class="importance-description">Feature importance of each section for positive/high overall ratings (>= 4.0). Shows which sections contribute most to high satisfaction:</p>
+        <div class="importance-chart-container">
+            <canvas id="sectionImportanceChartStandalone" width="600" height="400"></canvas>
+        </div>
+    </div>
+    {% else %}
+    <!-- Debug: Feature Importance not showing -->
+    <!-- feedback_summary exists: {{ feedback_summary|yesno:"Yes,No" }} -->
+    <!-- section_importance exists: {% if feedback_summary %}{{ feedback_summary.section_importance|yesno:"Yes,No" }}{% else %}No feedback_summary{% endif %} -->
+    {% endif %}
+
+
+    <!-- Sentiment Forecast -->
+    {% if forecast_data %}
+    <div class="forecast-section">
+        <h3>📈 Sentiment Forecast</h3>
+        <p class="forecast-description">Forecasted sentiment trends based on recent reviews (next 7 days)</p>
+        <div class="forecast-card">
+            <canvas id="sentimentForecastChart" width="400" height="200"></canvas>
+            <div class="forecast-trend" id="forecastTrendIndicator">
+                <span class="trend-label">Trend:</span>
+                <span class="trend-value" id="trendValue">Loading...</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not latest_response %}
+    <div class="no-data-card">
+        <h3>No Questionnaire Data Available</h3>
+        <p>Please complete the employee satisfaction questionnaire first to see ML analysis results.</p>
+        <a href="{% url 'frontend:questionnaire_intro' %}" class="btn btn-primary">Take Questionnaire</a>
+    </div>
+    {% else %}
+    
+    <!-- Model Training -->
+    <div class="analysis-status">
+        <div class="status-card">
+            <h3>Model Training</h3>
+            <p>Train machine learning models on your dataset to generate insights and topic analysis.</p>
+            <button onclick="trainModels()" class="btn btn-success">Train Models</button>
+        </div>
+    </div>
+
+
+    <!-- Topic Analysis Results (Aggregated) -->
+    {% if aggregated_topic_analyses %}
+    <div class="topic-analysis">
+        <h3>📈 Topic Analysis</h3>
+        <p class="topic-analysis-description">Topics discovered across all employee responses, aggregated by section</p>
+        <div class="topics-grid">
+            {% for analysis in aggregated_topic_analyses %}
+            <div class="topic-card">
+                <div class="topic-header">
+                    <h4>{{ analysis.section_name }}</h4>
+                </div>
+                <div class="topic-keywords">
+                    <strong>Key Topics:</strong> {{ analysis.topic_keywords }}
+                </div>
+                <div class="sentiment-indicator">
+                    <span class="sentiment-label">
+                        Sentiment: 
+                        {% if analysis.sentiment_score > 0.1 %}
+                            <span class="positive">😊 Positive</span>
+                        {% elif analysis.sentiment_score < -0.1 %}
+                            <span class="negative">😞 Negative</span>
+                        {% else %}
+                            <span class="neutral">😐 Neutral</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="response-count">
+                    <small>Based on {{ analysis.response_count }} response{{ analysis.response_count|pluralize }}</small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Section Insights -->
+    {% if section_insights %}
+    <div class="section-insights">
+        <h3>Section Insights & Recommendations</h3>
+        <div class="insights-grid">
+            {% for section_name, insight in section_insights.items %}
+            <div class="insight-card {% if insight.is_low %}low-score{% endif %} {% if insight.no_data %}no-data{% endif %}">
+                <div class="insight-header">
+                    <h4>{{ section_name }}</h4>
+                    {% if insight.no_data %}
+                    <span class="section-score no-data-score">N/A</span>
+                    {% else %}
+                    <span class="section-score">{{ insight.score|floatformat:2 }}</span>
+                    {% endif %}
+                </div>
+                
+                {% if insight.no_data %}
+                <div class="no-data-message">
+                    <span class="info-icon">ℹ️</span>
+                    <span class="info-text">No data available for this section</span>
+                </div>
+                {% elif insight.is_low %}
+                <div class="low-score-warning">
+                    <span class="warning-icon">⚠️</span>
+                    <span class="warning-text">This section scored below average</span>
+                </div>
+                {% endif %}
+                
+                {% if insight.negative_topics %}
+                <div class="negative-topics">
+                    <h5>Identified Issues:</h5>
+                    {% for topic in insight.negative_topics %}
+                    <div class="negative-topic">
+                        <span class="topic-name">{{ topic.topic_name }}</span>
+                        <span class="correlation-score">Correlation: {{ topic.correlation|floatformat:3 }}</span>
+                        <div class="topic-keywords">
+                            {% for keyword in topic.keywords %}
+                            <span class="keyword-tag negative">{{ keyword }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if insight.recommendations %}
+                <div class="recommendations">
+                    <h5>Recommendations:</h5>
+                    <ul>
+                        {% for recommendation in insight.recommendations %}
+                        <li>{{ recommendation }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% endif %}
+</section>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Pass section sentiment data to JavaScript -->
+<script>
+    const sectionSentimentData = {% if section_sentiment_data %}{
+        {% for section_name, data in section_sentiment_data.items %}
+        "{{ section_name }}": {
+            positive: {{ data.positive|default:0 }},
+            negative: {{ data.negative|default:0 }},
+            neutral: {{ data.neutral|default:0 }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    }{% else %}{}{% endif %};
+    
+    const sectionIdMap = {% if sections %}{
+        {% for section in sections %}
+        {{ section.id }}: "{{ section.name }}"{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    }{% else %}{}{% endif %};
+    
+    // Debug logging
+    console.log('Section Sentiment Data:', sectionSentimentData);
+    console.log('Sections:', {{ sections|length|default:0 }});
+</script>
+
+<!-- VADER Sentiment Pie Charts Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Overall VADER Sentiment Chart
+    const overallCtx = document.getElementById('overallVaderChart');
+    console.log('Feedback pie chart canvas element:', overallCtx);
+    if (overallCtx) {
+        const overallData = {
+            positive: {{ overall_sentiment_data.positive|default:0 }},
+            negative: {{ overall_sentiment_data.negative|default:0 }},
+            neutral: {{ overall_sentiment_data.neutral|default:0 }}
+        };
+        
+        console.log('Overall sentiment data:', overallData);
+        const total = overallData.positive + overallData.negative + overallData.neutral;
+        console.log('Total sentiment count:', total);
+        
+        if (total > 0) {
+            console.log('Creating Feedback pie chart...');
+            new Chart(overallCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Positive', 'Negative', 'Neutral'],
+                    datasets: [{
+                        data: [overallData.positive, overallData.negative, overallData.neutral],
+                        backgroundColor: [
+                            'rgba(39, 174, 96, 0.8)',   // Green for positive
+                            'rgba(231, 76, 60, 0.8)',   // Red for negative
+                            'rgba(241, 196, 15, 0.8)'   // Yellow for neutral
+                        ],
+                        borderColor: [
+                            'rgba(39, 174, 96, 1)',
+                            'rgba(231, 76, 60, 1)',
+                            'rgba(241, 196, 15, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return label + ': ' + value + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            console.log('Feedback pie chart created successfully');
+        } else {
+            console.warn('No sentiment data available for pie chart. Total:', total);
+            overallCtx.parentElement.innerHTML = '<p class="no-data-message">No sentiment data available</p>';
+        }
+    } else {
+        console.warn('overallVaderChart canvas element not found');
+    }
+});
+</script>
+
+<!-- Sentiment Forecast Chart Script -->
+<script>
+// Sentiment Forecast Chart
+{% if forecast_data %}
+document.addEventListener('DOMContentLoaded', function() {
+    const forecastCtx = document.getElementById('sentimentForecastChart');
+    if (forecastCtx) {
+        try {
+            const forecastDataStr = {{ forecast_data|safe }};
+            const forecastDataObj = typeof forecastDataStr === 'string' ? JSON.parse(forecastDataStr) : forecastDataStr;
+            const historicalData = forecastDataObj.historical;
+            const forecastData = forecastDataObj.forecast;
+            const trend = forecastDataObj.trend;
+        
+        // Combine historical and forecast data
+        const allDates = historicalData.dates.concat(forecastData.dates);
+        const historicalValues = historicalData.values;
+        const forecastValues = forecastData.values;
+        
+        // Create arrays with nulls for the split
+        const historicalWithNulls = historicalValues.concat(new Array(forecastValues.length).fill(null));
+        const forecastWithNulls = new Array(historicalValues.length).fill(null).concat(forecastValues);
+        
+        new Chart(forecastCtx, {
+            type: 'line',
+            data: {
+                labels: allDates,
+                datasets: [
+                    {
+                        label: 'Historical Sentiment',
+                        data: historicalWithNulls,
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        pointRadius: 4
+                    },
+                    {
+                        label: 'Forecast',
+                        data: forecastWithNulls,
+                        borderColor: 'rgba(231, 76, 60, 1)',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: true,
+                        pointRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.parsed.y === null) return '';
+                                const value = context.parsed.y;
+                                let sentimentLabel = 'Neutral';
+                                if (value > 0.3) sentimentLabel = 'Positive';
+                                else if (value < -0.3) sentimentLabel = 'Negative';
+                                return context.dataset.label + ': ' + value.toFixed(2) + ' (' + sentimentLabel + ')';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: -1,
+                        max: 1,
+                        title: {
+                            display: true,
+                            text: 'Sentiment Score'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+{% endif %}
+</script>
+
+<!-- Feature Importance Chart Script -->
+<script>
+// Section Importance Chart - Vertical Bar Chart with all 6 sections
+{% if feedback_summary and feedback_summary.section_importance %}
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing Feature Importance chart...');
+    const importanceCtxStandalone = document.getElementById('sectionImportanceChartStandalone');
+    console.log('Feature Importance canvas element:', importanceCtxStandalone);
+    if (importanceCtxStandalone) {
+        try {
+            const importanceDataStr = '{{ feedback_summary.section_importance|safe }}';
+            console.log('Feature Importance Data String length:', importanceDataStr.length);
+            console.log('Feature Importance Data String preview:', importanceDataStr.substring(0, 200) + '...');
+            const importanceData = JSON.parse(importanceDataStr);
+            console.log('Feature Importance Data Parsed:', importanceData);
+            
+            const sections = importanceData.sorted_sections;
+            const importanceValues = importanceData.sorted_importance;
+            
+            console.log('Sections:', sections);
+            console.log('Importance Values:', importanceValues);
+            
+            if (!sections || !importanceValues || sections.length === 0 || importanceValues.length === 0) {
+                console.error('Missing sections or importance values');
+                importanceCtxStandalone.parentElement.innerHTML = '<p class="no-data-message">Error: Missing chart data</p>';
+                return;
+            }
+            
+            // Create color gradient (higher importance = darker blue)
+            const colors = importanceValues.map(val => {
+                const intensity = Math.min(255, Math.floor(val * 500)); // Scale to 0-255
+                return `rgba(52, 152, 219, ${0.4 + (val * 0.6)})`; // Blue gradient
+            });
+            
+            new Chart(importanceCtxStandalone, {
+                type: 'bar',
+                data: {
+                    labels: sections,
+                    datasets: [{
+                        label: 'Feature Importance',
+                        data: importanceValues,
+                        backgroundColor: colors,
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    // Vertical bar chart (default, no indexAxis needed)
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Feature Importance: Sections Contributing to High Overall Ratings',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            padding: 20
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    const percentage = (value * 100).toFixed(1);
+                                    return `Importance: ${percentage}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: 'Feature Importance (0-1)',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return (value * 100).toFixed(0) + '%';
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Sections',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("Error parsing section importance data or initializing chart:", error);
+            if (importanceCtxStandalone.parentElement) {
+                importanceCtxStandalone.parentElement.innerHTML = '<p class="no-data-message">Error loading feature importance data.</p>';
+            }
+        }
+    } else {
+        console.warn('sectionImportanceChartStandalone canvas element not found');
+    }
+});
+{% endif %}
+</script>
+
+<!-- React Components -->
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// Loading Spinner Component
+const LoadingSpinner = ({ message, progress = null }) => {
+    return React.createElement('div', { className: 'loading-overlay' },
+        React.createElement('div', { className: 'loading-container' },
+            React.createElement('div', { className: 'loading-spinner' }),
+            React.createElement('h3', { className: 'loading-message' }, message),
+            progress && React.createElement('div', { className: 'loading-progress' },
+                React.createElement('div', { 
+                    className: 'progress-bar',
+                    style: { width: `${progress}%` }
+                })
+            ),
+            React.createElement('p', { className: 'loading-subtitle' }, 
+                'This may take a few moments...'
+            )
+        )
+    );
+};
+
+// Analysis Status Component
+const AnalysisStatus = ({ isAnalyzing, progress, currentStep }) => {
+    if (!isAnalyzing) return null;
+
+    return React.createElement(LoadingSpinner, {
+        message: currentStep || 'Running ML Analysis',
+        progress: progress
+    });
+};
+
+// Training Status Component
+const TrainingStatus = ({ isTraining, progress, currentModel }) => {
+    if (!isTraining) return null;
+
+    return React.createElement(LoadingSpinner, {
+        message: currentModel || 'Training ML Models',
+        progress: progress
+    });
+};
+
+// Main App Component
+const LoadingApp = () => {
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [isTraining, setIsTraining] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [currentStep, setCurrentStep] = useState('');
+
+    // Listen for analysis events
+    useEffect(() => {
+        const handleAnalysisStart = () => {
+            setIsAnalyzing(true);
+            setProgress(0);
+            setCurrentStep('Initializing analysis...');
+        };
+
+        const handleAnalysisProgress = (event) => {
+            const { step, progress: prog } = event.detail;
+            setCurrentStep(step);
+            setProgress(prog);
+        };
+
+        const handleAnalysisComplete = () => {
+            setIsAnalyzing(false);
+            setProgress(100);
+            setTimeout(() => setProgress(0), 1000);
+        };
+
+        const handleTrainingStart = () => {
+            setIsTraining(true);
+            setProgress(0);
+        };
+
+        const handleTrainingProgress = (event) => {
+            const { model, progress: prog } = event.detail;
+            setCurrentStep(model);
+            setProgress(prog);
+        };
+
+        const handleTrainingComplete = () => {
+            setIsTraining(false);
+            setProgress(100);
+            setTimeout(() => setProgress(0), 1000);
+        };
+
+        // Add event listeners
+        window.addEventListener('analysis-start', handleAnalysisStart);
+        window.addEventListener('analysis-progress', handleAnalysisProgress);
+        window.addEventListener('analysis-complete', handleAnalysisComplete);
+        window.addEventListener('training-start', handleTrainingStart);
+        window.addEventListener('training-progress', handleTrainingProgress);
+        window.addEventListener('training-complete', handleTrainingComplete);
+
+        return () => {
+            window.removeEventListener('analysis-start', handleAnalysisStart);
+            window.removeEventListener('analysis-progress', handleAnalysisProgress);
+            window.removeEventListener('analysis-complete', handleAnalysisComplete);
+            window.removeEventListener('training-start', handleTrainingStart);
+            window.removeEventListener('training-progress', handleTrainingProgress);
+            window.removeEventListener('training-complete', handleTrainingComplete);
+        };
+    }, []);
+
+    return React.createElement('div', null,
+        React.createElement(AnalysisStatus, { 
+            isAnalyzing, 
+            progress, 
+            currentStep 
+        }),
+        React.createElement(TrainingStatus, { 
+            isTraining, 
+            progress, 
+            currentModel: currentStep 
+        })
+    );
+};
+
+// Render the app
+ReactDOM.render(React.createElement(LoadingApp), document.getElementById('loading-root'));
+</script>
+
+<script>
+function analyzeResponse(responseId) {
+    // Dispatch start event
+    window.dispatchEvent(new CustomEvent('analysis-start'));
+    
+    // Simulate progress steps
+    const steps = [
+        { step: 'Initializing analysis...', progress: 10 },
+        { step: 'Processing sentiment data...', progress: 25 },
+        { step: 'Running topic modeling...', progress: 50 },
+        { step: 'Calculating correlations...', progress: 75 },
+        { step: 'Generating insights...', progress: 90 },
+        { step: 'Finalizing results...', progress: 100 }
+    ];
+    
+    let currentStepIndex = 0;
+    
+    const progressInterval = setInterval(() => {
+        if (currentStepIndex < steps.length) {
+            const { step, progress } = steps[currentStepIndex];
+            window.dispatchEvent(new CustomEvent('analysis-progress', {
+                detail: { step, progress }
+            }));
+            currentStepIndex++;
+        } else {
+            clearInterval(progressInterval);
+        }
+    }, 1000);
+    
+    // Make the actual API call
+    fetch(`/ml/analyze/${responseId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        clearInterval(progressInterval);
+        window.dispatchEvent(new CustomEvent('analysis-complete'));
+        
+        if (data.status === 'success') {
+            // Reload the page to show results
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            alert('Analysis failed: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        window.dispatchEvent(new CustomEvent('analysis-complete'));
+        console.error('Error:', error);
+        alert('Analysis failed: ' + error.message);
+    });
+}
+
+// Enhanced trainModels function with progress tracking
+function trainModels() {
+    // Dispatch start event
+    window.dispatchEvent(new CustomEvent('training-start'));
+    
+    // Simulate training progress
+    const models = [
+        { model: 'Training Correlation Model (Random Forest)...', progress: 50 },
+        { model: 'Saving models to database...', progress: 100 }
+    ];
+    
+    let currentModelIndex = 0;
+    
+    const progressInterval = setInterval(() => {
+        if (currentModelIndex < models.length) {
+            const { model, progress } = models[currentModelIndex];
+            window.dispatchEvent(new CustomEvent('training-progress', {
+                detail: { model, progress }
+            }));
+            currentModelIndex++;
+        } else {
+            clearInterval(progressInterval);
+        }
+    }, 3000);
+    
+    // Make the actual API call
+    fetch('/ml/train-models/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        clearInterval(progressInterval);
+        window.dispatchEvent(new CustomEvent('training-complete'));
+        
+        console.log('Training response:', data);
+        
+        if (data.status === 'success') {
+            alert('Models trained successfully! Reloading page...');
+            // Force reload immediately
+            window.location.reload();
+        } else {
+            alert('Training failed: ' + (data.error || data.message || 'Unknown error'));
+            console.error('Training error:', data);
+        }
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        window.dispatchEvent(new CustomEvent('training-complete'));
+        console.error('Training error:', error);
+        alert('Training failed: ' + error.message);
+    });
+}
+
+// Utility function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+</script>
+
+<!-- Previous Response Section at Bottom -->
+{% if latest_response %}
+<div class="previous-response-section">
+    <div class="status-card completed">
+        <h3>ℹ️ Previous Response Found</h3>
+        <p>You previously completed this questionnaire on {{ latest_response.submitted_at|date:"F d, Y" }}.</p>
+        <p class="info-text">You can submit a new response by taking the questionnaire again, or <a href="{% url 'frontend:questionnaire_results' latest_response.id %}">view your previous results</a>.</p>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

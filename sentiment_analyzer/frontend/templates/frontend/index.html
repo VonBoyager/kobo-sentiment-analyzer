@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Kobo Frontend{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'frontend/css/main.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- React CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Kobo</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item">
+                        <a href="{% url 'frontend:home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                            <span class="nav-icon">🏠</span>
+                            <span class="nav-text">Home</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'frontend:questionnaire_intro' %}" class="nav-link {% if request.resolver_match.url_name == 'questionnaire_intro' or request.resolver_match.url_name == 'sentiment_analysis' %}active{% endif %}">
+                            <span class="nav-icon">📋</span>
+                            <span class="nav-text">Questionnaire</span>
+                        </a>
+                    </li>
+        <li class="nav-item">
+            <a href="{% url 'frontend:upload_data' %}" class="nav-link {% if request.resolver_match.url_name == 'upload_data' %}active{% endif %}">
+                <span class="nav-icon">📤</span>
+                <span class="nav-text">Upload Data</span>
+            </a>
+        </li>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a href="{% url 'frontend:logout' %}" class="logout-btn">
+                    <span class="nav-icon">🚪</span>
+                    <span class="nav-text">Logout</span>
+                </a>
+            </div>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <header class="main-header">
+                <h1>{% block header %}Welcome to Kobo{% endblock %}</h1>
+            </header>
+            
+            <main class="content">
+                {% block content %}
+                <section id="home">
+                    <h2>Home</h2>
+                    <p>This is your Django frontend application with sidebar navigation.</p>
+                    <p>Current time: {{ current_time }}</p>
+                </section>
+                {% endblock %}
+            </main>
+            
+            <footer class="main-footer">
+                <p>&copy; 2024 Kobo Project - Powered by Django</p>
+            </footer>
+        </div>
+    </div>
+    
+    {% load static %}
+    <script src="{% static 'frontend/js/main.js' %}"></script>
+    <script>
+        function confirmQuestionnaireNavigation(event) {
+            const confirmed = confirm('Are you sure you want to take the questionnaire? This will start a new questionnaire session.');
+            if (!confirmed) {
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        }
+    </script>
+</body>
+</html>

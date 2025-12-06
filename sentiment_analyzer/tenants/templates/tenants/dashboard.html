@@ -1,0 +1,81 @@
+{% extends 'tenants/base.html' %}
+
+{% block page_title %}Dashboard - {{ tenant.name }}{% endblock %}
+
+{% block tenant_content %}
+<div class="tenant-dashboard">
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <h3>{{ files_count }}</h3>
+            <p>Files</p>
+            <a href="{% url 'tenants:files' %}" class="stat-link">View Files</a>
+        </div>
+        {% if is_admin %}
+        <div class="stat-card">
+            <h3>{{ models_count }}</h3>
+            <p>Models</p>
+            <a href="{% url 'tenants:models' %}" class="stat-link">View Models</a>
+        </div>
+        {% endif %}
+        <div class="stat-card">
+            <h3>{{ users_count }}</h3>
+            <p>Users</p>
+        </div>
+    </div>
+    
+    <div class="dashboard-content">
+        <div class="recent-section">
+            <h3>Recent Files</h3>
+            {% if recent_files %}
+            <div class="file-list">
+                {% for file in recent_files %}
+                <div class="file-item">
+                    <span class="file-icon">📄</span>
+                    <div class="file-info">
+                        <strong>{{ file.name }}</strong>
+                        <small>{{ file.file_type|upper }} • {{ file.uploaded_at|date:"M d, Y" }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p>No files uploaded yet.</p>
+            {% endif %}
+            <a href="{% url 'tenants:upload_file' %}" class="btn btn-primary">Upload New File</a>
+        </div>
+        
+        {% if is_admin %}
+        <div class="recent-section">
+            <h3>Recent Models</h3>
+            {% if recent_models %}
+            <div class="model-list">
+                {% for model in recent_models %}
+                <div class="model-item">
+                    <span class="model-icon">🤖</span>
+                    <div class="model-info">
+                        <strong>{{ model.name }}</strong>
+                        <small>{{ model.get_model_type_display }} • v{{ model.version }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p>No models uploaded yet.</p>
+            {% endif %}
+            <a href="{% url 'tenants:upload_model' %}" class="btn btn-primary">Upload New Model</a>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="quick-actions">
+        <h3>Quick Actions</h3>
+        <div class="action-buttons">
+            {% if is_admin %}
+            <a href="{% url 'tenants:analyze' %}" class="btn btn-success">Analyze Data</a>
+            <a href="{% url 'tenants:models' %}" class="btn btn-warning">Manage Models</a>
+            {% endif %}
+            <a href="{% url 'tenants:files' %}" class="btn btn-info">Manage Files</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

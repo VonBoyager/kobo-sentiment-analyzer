@@ -1,0 +1,571 @@
+{% extends 'frontend/index.html' %}
+
+{% block title %}ML Analysis Dashboard - Kobo{% endblock %}
+
+{% block header %}ML Analysis Dashboard{% endblock %}
+
+{% block content %}
+<!-- React Loading Components -->
+<div id="loading-root"></div>
+
+<section id="ml-dashboard">
+    <!-- Dataset Summary -->
+    <div class="dataset-summary">
+        <h3>📊 Your Dataset Summary</h3>
+        <div class="summary-stats">
+            <div class="stat-item">
+                <span class="stat-number">{{ total_responses }}</span>
+                <span class="stat-label">Total Responses</span>
+                {% if has_similar_data %}
+                    <small class="stat-note">(includes similar usernames)</small>
+                {% endif %}
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ sentiment_analyses }}</span>
+                <span class="stat-label">Sentiment Analyses</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ total_topic_analyses }}</span>
+                <span class="stat-label">Topic Analyses</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ correlations }}</span>
+                <span class="stat-label">Correlations Found</span>
+            </div>
+        </div>
+        
+        {% if sentiment_breakdown %}
+        <div class="sentiment-breakdown">
+            <h4>Sentiment Distribution</h4>
+            <div class="sentiment-bars">
+                {% for sentiment, count in sentiment_breakdown.items %}
+                <div class="sentiment-bar">
+                    <span class="sentiment-label">{{ sentiment|title }}</span>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: {% widthratio count total_responses 100 %}%"></div>
+                        <span class="bar-count">{{ count }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if not latest_response %}
+    <div class="no-data-card">
+        <h3>No Questionnaire Data Available</h3>
+        <p>Please complete the employee satisfaction questionnaire first to see ML analysis results.</p>
+        <a href="{% url 'frontend:sentiment_analysis' %}" class="btn btn-primary">Take Questionnaire</a>
+    </div>
+    {% else %}
+    
+    <!-- Analysis Status -->
+    <div class="analysis-status">
+        <div class="status-card">
+            <h3>Analysis Status</h3>
+            <div class="status-indicators">
+                <div class="indicator {% if has_analysis %}success{% else %}pending{% endif %}">
+                    <span class="indicator-icon">{% if has_analysis %}✓{% else %}⏳{% endif %}</span>
+                    <span class="indicator-text">ML Analysis</span>
+                </div>
+                <div class="indicator {% if total_topic_analyses %}success{% else %}pending{% endif %}">
+                    <span class="indicator-icon">{% if total_topic_analyses %}✓{% else %}⏳{% endif %}</span>
+                    <span class="indicator-text">Topic Modeling</span>
+                </div>
+                <div class="indicator {% if section_insights %}success{% else %}pending{% endif %}">
+                    <span class="indicator-icon">{% if section_insights %}✓{% else %}⏳{% endif %}</span>
+                    <span class="indicator-text">Section Insights</span>
+                </div>
+            </div>
+        {% if not has_analysis %}
+        <button onclick="analyzeResponse('{{ latest_response.id }}')" class="btn btn-primary">Run Analysis</button>
+        {% endif %}
+        <button onclick="trainModels()" class="btn btn-success" style="margin-left: 10px;">Train Models</button>
+        </div>
+    </div>
+
+    <!-- Sentiment Analysis Results -->
+    {% if sentiment_analysis %}
+    <div class="sentiment-analysis">
+        <h3>Sentiment Analysis</h3>
+        <div class="sentiment-card">
+            <div class="sentiment-header">
+                <h4>{{ sentiment_analysis.sentiment_label|title }} Sentiment</h4>
+                <span class="confidence-score">{{ sentiment_analysis.confidence|floatformat:2 }}</span>
+            </div>
+            <div class="sentiment-scores">
+                <div class="score-item">
+                    <span class="score-label">Positive</span>
+                    <div class="score-bar">
+                        <div class="score-fill positive" style="width: {{ sentiment_analysis.positive_score|floatformat:0 }}%"></div>
+                    </div>
+                    <span class="score-value">{{ sentiment_analysis.positive_score|floatformat:2 }}</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">Neutral</span>
+                    <div class="score-bar">
+                        <div class="score-fill neutral" style="width: {{ sentiment_analysis.neutral_score|floatformat:0 }}%"></div>
+                    </div>
+                    <span class="score-value">{{ sentiment_analysis.neutral_score|floatformat:2 }}</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">Negative</span>
+                    <div class="score-bar">
+                        <div class="score-fill negative" style="width: {{ sentiment_analysis.negative_score|floatformat:0 }}%"></div>
+                    </div>
+                    <span class="score-value">{{ sentiment_analysis.negative_score|floatformat:2 }}</span>
+                </div>
+            </div>
+            <div class="compound-score">
+                <span class="compound-label">Compound Score</span>
+                <span class="compound-value">{{ sentiment_analysis.compound_score|floatformat:3 }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Topic Analysis Results -->
+    {% if topic_analyses %}
+    <div class="topic-analysis">
+        <h3>Topic Analysis</h3>
+        <div class="topics-grid">
+            {% for topic in topic_analyses %}
+            <div class="topic-card">
+                <div class="topic-header">
+                    <h4>{{ topic.topic_name }}</h4>
+                    <span class="topic-probability">{{ topic.topic_probability|floatformat:2 }}</span>
+                </div>
+                <div class="topic-keywords">
+                    {% for keyword in topic.topic_keywords %}
+                    <span class="keyword-tag">{{ keyword }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Section Insights -->
+    {% if section_insights %}
+    <div class="section-insights">
+        <h3>Section Insights & Recommendations</h3>
+        <div class="insights-grid">
+            {% for section_name, insight in section_insights.items %}
+            <div class="insight-card {% if insight.is_low %}low-score{% endif %}">
+                <div class="insight-header">
+                    <h4>{{ section_name }}</h4>
+                    <span class="section-score">{{ insight.score|floatformat:2 }}</span>
+                </div>
+                
+                {% if insight.is_low %}
+                <div class="low-score-warning">
+                    <span class="warning-icon">⚠️</span>
+                    <span class="warning-text">This section scored below average</span>
+                </div>
+                {% endif %}
+                
+                {% if insight.negative_topics %}
+                <div class="negative-topics">
+                    <h5>Identified Issues:</h5>
+                    {% for topic in insight.negative_topics %}
+                    <div class="negative-topic">
+                        <span class="topic-name">{{ topic.topic_name }}</span>
+                        <span class="correlation-score">Correlation: {{ topic.correlation|floatformat:3 }}</span>
+                        <div class="topic-keywords">
+                            {% for keyword in topic.keywords %}
+                            <span class="keyword-tag negative">{{ keyword }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if insight.recommendations %}
+                <div class="recommendations">
+                    <h5>Recommendations:</h5>
+                    <ul>
+                        {% for recommendation in insight.recommendations %}
+                        <li>{{ recommendation }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Correlation Insights -->
+    {% if has_correlations %}
+    <div class="correlation-insights">
+        <h3>📊 Topic Correlation Insights</h3>
+        <p class="insights-description">Discover which topics correlate with positive and negative sentiment across all sections.</p>
+        
+        <div class="correlation-grid">
+            <!-- Positive Correlations -->
+            {% if positive_correlations %}
+            <div class="correlation-section positive">
+                <div class="correlation-header">
+                    <h4>✅ Topics Contributing to Positive Sentiment</h4>
+                    <p class="correlation-subtitle">These topics are strongly associated with higher satisfaction scores</p>
+                </div>
+                <div class="correlation-list">
+                    {% for corr in positive_correlations %}
+                    <div class="correlation-item positive">
+                        <div class="correlation-main">
+                            <span class="section-name">{{ corr.section_name }}</span>
+                            <span class="topic-name">{{ corr.topic_name }}</span>
+                        </div>
+                        <div class="correlation-stats">
+                            <span class="correlation-score positive">+{{ corr.correlation_score|floatformat:3 }}</span>
+                            <span class="sample-size">(n={{ corr.sample_size }})</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Negative Correlations -->
+            {% if negative_correlations %}
+            <div class="correlation-section negative">
+                <div class="correlation-header">
+                    <h4>⚠️ Topics Correlating with Negative Sentiment</h4>
+                    <p class="correlation-subtitle">These topics are associated with lower satisfaction scores</p>
+                </div>
+                <div class="correlation-list">
+                    {% for corr in negative_correlations %}
+                    <div class="correlation-item negative">
+                        <div class="correlation-main">
+                            <span class="section-name">{{ corr.section_name }}</span>
+                            <span class="topic-name">{{ corr.topic_name }}</span>
+                        </div>
+                        <div class="correlation-stats">
+                            <span class="correlation-score negative">{{ corr.correlation_score|floatformat:3 }}</span>
+                            <span class="sample-size">(n={{ corr.sample_size }})</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="correlation-summary">
+            <div class="summary-card">
+                <h5>📈 Key Insights</h5>
+                <ul>
+                    <li><strong>{{ positive_correlations|length }}</strong> topics show strong positive correlation with satisfaction</li>
+                    <li><strong>{{ negative_correlations|length }}</strong> topics correlate with negative sentiment</li>
+                    <li>Focus on improving areas with negative correlations to boost overall satisfaction</li>
+                    <li>Leverage positive correlations to maintain and enhance employee experience</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Feedback Section -->
+    <div class="feedback-section">
+        <h3>Feedback on Analysis</h3>
+        <div class="feedback-card">
+            <p>How helpful was this analysis?</p>
+            <div class="feedback-buttons">
+                <button onclick="submitFeedback('helpful')" class="btn btn-success">Helpful</button>
+                <button onclick="submitFeedback('partially_helpful')" class="btn btn-warning">Partially Helpful</button>
+                <button onclick="submitFeedback('not_helpful')" class="btn btn-danger">Not Helpful</button>
+            </div>
+        </div>
+    </div>
+    
+    {% endif %}
+</section>
+
+<!-- React Components -->
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// Loading Spinner Component
+const LoadingSpinner = ({ message, progress = null }) => {
+    return React.createElement('div', { className: 'loading-overlay' },
+        React.createElement('div', { className: 'loading-container' },
+            React.createElement('div', { className: 'loading-spinner' }),
+            React.createElement('h3', { className: 'loading-message' }, message),
+            progress && React.createElement('div', { className: 'loading-progress' },
+                React.createElement('div', { 
+                    className: 'progress-bar',
+                    style: { width: `${progress}%` }
+                })
+            ),
+            React.createElement('p', { className: 'loading-subtitle' }, 
+                'This may take a few moments...'
+            )
+        )
+    );
+};
+
+// Analysis Status Component
+const AnalysisStatus = ({ isAnalyzing, progress, currentStep }) => {
+    if (!isAnalyzing) return null;
+
+    return React.createElement(LoadingSpinner, {
+        message: currentStep || 'Running ML Analysis',
+        progress: progress
+    });
+};
+
+// Training Status Component
+const TrainingStatus = ({ isTraining, progress, currentModel }) => {
+    if (!isTraining) return null;
+
+    return React.createElement(LoadingSpinner, {
+        message: currentModel || 'Training ML Models',
+        progress: progress
+    });
+};
+
+// Main App Component
+const LoadingApp = () => {
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [isTraining, setIsTraining] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [currentStep, setCurrentStep] = useState('');
+
+    // Listen for analysis events
+    useEffect(() => {
+        const handleAnalysisStart = () => {
+            setIsAnalyzing(true);
+            setProgress(0);
+            setCurrentStep('Initializing analysis...');
+        };
+
+        const handleAnalysisProgress = (event) => {
+            const { step, progress: prog } = event.detail;
+            setCurrentStep(step);
+            setProgress(prog);
+        };
+
+        const handleAnalysisComplete = () => {
+            setIsAnalyzing(false);
+            setProgress(100);
+            setTimeout(() => setProgress(0), 1000);
+        };
+
+        const handleTrainingStart = () => {
+            setIsTraining(true);
+            setProgress(0);
+        };
+
+        const handleTrainingProgress = (event) => {
+            const { model, progress: prog } = event.detail;
+            setCurrentStep(model);
+            setProgress(prog);
+        };
+
+        const handleTrainingComplete = () => {
+            setIsTraining(false);
+            setProgress(100);
+            setTimeout(() => setProgress(0), 1000);
+        };
+
+        // Add event listeners
+        window.addEventListener('analysis-start', handleAnalysisStart);
+        window.addEventListener('analysis-progress', handleAnalysisProgress);
+        window.addEventListener('analysis-complete', handleAnalysisComplete);
+        window.addEventListener('training-start', handleTrainingStart);
+        window.addEventListener('training-progress', handleTrainingProgress);
+        window.addEventListener('training-complete', handleTrainingComplete);
+
+        return () => {
+            window.removeEventListener('analysis-start', handleAnalysisStart);
+            window.removeEventListener('analysis-progress', handleAnalysisProgress);
+            window.removeEventListener('analysis-complete', handleAnalysisComplete);
+            window.removeEventListener('training-start', handleTrainingStart);
+            window.removeEventListener('training-progress', handleTrainingProgress);
+            window.removeEventListener('training-complete', handleTrainingComplete);
+        };
+    }, []);
+
+    return React.createElement('div', null,
+        React.createElement(AnalysisStatus, { 
+            isAnalyzing, 
+            progress, 
+            currentStep 
+        }),
+        React.createElement(TrainingStatus, { 
+            isTraining, 
+            progress, 
+            currentModel: currentStep 
+        })
+    );
+};
+
+// Render the app
+ReactDOM.render(React.createElement(LoadingApp), document.getElementById('loading-root'));
+</script>
+
+<script>
+function analyzeResponse(responseId) {
+    // Dispatch start event
+    window.dispatchEvent(new CustomEvent('analysis-start'));
+    
+    // Simulate progress steps
+    const steps = [
+        { step: 'Initializing analysis...', progress: 10 },
+        { step: 'Processing sentiment data...', progress: 25 },
+        { step: 'Running topic modeling...', progress: 50 },
+        { step: 'Calculating correlations...', progress: 75 },
+        { step: 'Generating insights...', progress: 90 },
+        { step: 'Finalizing results...', progress: 100 }
+    ];
+    
+    let currentStepIndex = 0;
+    
+    const progressInterval = setInterval(() => {
+        if (currentStepIndex < steps.length) {
+            const { step, progress } = steps[currentStepIndex];
+            window.dispatchEvent(new CustomEvent('analysis-progress', {
+                detail: { step, progress }
+            }));
+            currentStepIndex++;
+        } else {
+            clearInterval(progressInterval);
+        }
+    }, 1000);
+    
+    // Make the actual API call
+    fetch(`/ml/analyze/${responseId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        clearInterval(progressInterval);
+        window.dispatchEvent(new CustomEvent('analysis-complete'));
+        
+        if (data.status === 'success') {
+            // Reload the page to show results
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            alert('Analysis failed: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        window.dispatchEvent(new CustomEvent('analysis-complete'));
+        console.error('Error:', error);
+        alert('Analysis failed: ' + error.message);
+    });
+}
+
+// Enhanced trainModels function with progress tracking
+function trainModels() {
+    // Dispatch start event
+    window.dispatchEvent(new CustomEvent('training-start'));
+    
+    // Simulate training progress
+    const models = [
+        { model: 'Sentiment Model (VADER)', progress: 25 },
+        { model: 'Topic Model (BERTopic)', progress: 50 },
+        { model: 'Correlation Model (Naive Bayes)', progress: 75 },
+        { model: 'Saving models to database...', progress: 100 }
+    ];
+    
+    let currentModelIndex = 0;
+    
+    const progressInterval = setInterval(() => {
+        if (currentModelIndex < models.length) {
+            const { model, progress } = models[currentModelIndex];
+            window.dispatchEvent(new CustomEvent('training-progress', {
+                detail: { model, progress }
+            }));
+            currentModelIndex++;
+        } else {
+            clearInterval(progressInterval);
+        }
+    }, 2000);
+    
+    // Make the actual API call
+    fetch('/ml/train-models/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        clearInterval(progressInterval);
+        window.dispatchEvent(new CustomEvent('training-complete'));
+        
+        if (data.status === 'success') {
+            alert('Models trained successfully!');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            alert('Training failed: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        window.dispatchEvent(new CustomEvent('training-complete'));
+        console.error('Error:', error);
+        alert('Training failed: ' + error.message);
+    });
+}
+
+// Utility function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function submitFeedback(feedbackType) {
+    const responseId = '{{ latest_response.id }}';
+    
+    fetch('/ml/feedback/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: JSON.stringify({
+            response_id: responseId,
+            feedback_type: feedbackType
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('Thank you for your feedback!');
+        } else {
+            alert('Feedback submission failed');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Feedback submission failed');
+    });
+}
+</script>
+{% endblock %}

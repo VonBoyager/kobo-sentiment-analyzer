@@ -1,0 +1,224 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Questionnaire Unavailable{% endblock %}
+
+{% block content %}
+<div class="unavailable-container">
+    <div class="unavailable-content">
+        <div class="unavailable-icon">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#ff9800"/>
+                <path d="M12 8v4M12 16h.01" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+        
+        <h1>Questionnaire Unavailable</h1>
+        <h2>{{ questionnaire.title }}</h2>
+        
+        <div class="unavailable-message">
+            {% if questionnaire.is_expired %}
+            <p><strong>This questionnaire has expired.</strong></p>
+            <p>It was available until {{ questionnaire.expires_at|date:"F d, Y \a\t g:i A" }}.</p>
+            {% elif not questionnaire.is_active %}
+            <p><strong>This questionnaire is no longer active.</strong></p>
+            <p>It has been deactivated by the administrator.</p>
+            {% elif questionnaire.current_responses >= questionnaire.max_responses %}
+            <p><strong>This questionnaire has reached its maximum number of responses.</strong></p>
+            <p>It has received {{ questionnaire.current_responses }} responses out of {{ questionnaire.max_responses }} allowed.</p>
+            {% endif %}
+        </div>
+        
+        <div class="questionnaire-details">
+            <h3>Questionnaire Information</h3>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <strong>Title:</strong> {{ questionnaire.title }}
+                </div>
+                <div class="detail-item">
+                    <strong>Created:</strong> {{ questionnaire.created_at|date:"F d, Y" }}
+                </div>
+                <div class="detail-item">
+                    <strong>Expires:</strong> {{ questionnaire.expires_at|date:"F d, Y \a\t g:i A" }}
+                </div>
+                <div class="detail-item">
+                    <strong>Responses:</strong> {{ questionnaire.current_responses }} / {{ questionnaire.max_responses }}
+                </div>
+                <div class="detail-item">
+                    <strong>Status:</strong> 
+                    {% if questionnaire.is_active %}
+                        <span class="status-active">Active</span>
+                    {% else %}
+                        <span class="status-inactive">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <a href="/" class="btn btn-primary">Go to Homepage</a>
+            <a href="/login/" class="btn btn-secondary">Login to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.unavailable-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.unavailable-content {
+    max-width: 700px;
+    text-align: center;
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.unavailable-icon {
+    margin-bottom: 30px;
+}
+
+.unavailable-content h1 {
+    color: #2c3e50;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.unavailable-content h2 {
+    color: #ff9800;
+    font-size: 1.5em;
+    margin-bottom: 30px;
+    font-weight: 400;
+}
+
+.unavailable-message {
+    background: #fff3e0;
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    border-left: 5px solid #ff9800;
+}
+
+.unavailable-message p {
+    margin-bottom: 10px;
+    color: #e65100;
+    font-size: 1.1em;
+}
+
+.unavailable-message p:last-child {
+    margin-bottom: 0;
+}
+
+.questionnaire-details {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.questionnaire-details h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.detail-item {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.detail-item strong {
+    color: #495057;
+}
+
+.status-active {
+    color: #4CAF50;
+    font-weight: 600;
+}
+
+.status-inactive {
+    color: #f44336;
+    font-weight: 600;
+}
+
+.actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 12px 25px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2980b9, #1f5f8b);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+@media (max-width: 768px) {
+    .unavailable-content {
+        padding: 25px;
+    }
+    
+    .unavailable-content h1 {
+        font-size: 2em;
+    }
+    
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}
+
+
+

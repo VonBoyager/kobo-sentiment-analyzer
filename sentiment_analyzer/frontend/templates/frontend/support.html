@@ -1,0 +1,57 @@
+{% extends 'frontend/index.html' %}
+
+{% block title %}Support - Kobo{% endblock %}
+
+{% block header %}Support{% endblock %}
+
+{% block content %}
+<div class="support-container">
+    <div class="support-intro">
+        <h2>Get Help & Support</h2>
+        <p>We're here to help you get the most out of Kobo. Find answers to common questions or contact our support team.</p>
+    </div>
+    
+    <div class="support-sections">
+        <div class="support-section">
+            <h3>📚 Documentation</h3>
+            <p>Learn how to use Kobo's features effectively</p>
+            <ul>
+                <li>Getting started guide</li>
+                <li>Sentiment analysis tutorial</li>
+                <li>Data upload instructions</li>
+                <li>Account management</li>
+            </ul>
+        </div>
+        
+        <div class="support-section">
+            <h3>❓ Frequently Asked Questions</h3>
+            <div class="faq-item">
+                <h4>How do I upload my data?</h4>
+                <p>Go to the Upload Data section and select your CSV file. Make sure it follows our data format requirements.</p>
+            </div>
+            <div class="faq-item">
+                <h4>What file formats are supported?</h4>
+                <p>Currently, we support CSV files with specific column requirements. Check the upload page for details.</p>
+            </div>
+            <div class="faq-item">
+                <h4>How accurate is the sentiment analysis?</h4>
+                <p>Our sentiment analysis uses advanced machine learning models with high accuracy rates. Results may vary based on data quality.</p>
+            </div>
+        </div>
+        
+        <div class="support-section">
+            <h3>📞 Contact Support</h3>
+            <p>Need more help? Contact our support team:</p>
+            <div class="contact-info">
+                <p><strong>Email:</strong> support@kobo.com</p>
+                <p><strong>Response Time:</strong> Within 24 hours</p>
+                <p><strong>Business Hours:</strong> Monday - Friday, 9 AM - 5 PM EST</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="support-footer">
+        <p>Last updated: {{ current_time|date:"M d, Y" }}</p>
+    </div>
+</div>
+{% endblock %}

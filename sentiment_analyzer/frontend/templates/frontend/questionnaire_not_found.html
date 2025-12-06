@@ -1,0 +1,167 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Questionnaire Not Found{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-content">
+        <div class="error-icon">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#f44336"/>
+                <path d="M15 9l-6 6M9 9l6 6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+        
+        <h1>Questionnaire Not Found</h1>
+        <h2>The questionnaire you're looking for doesn't exist</h2>
+        
+        <div class="error-message">
+            <p>The questionnaire link you used is invalid or has been removed.</p>
+            <p>This could happen if:</p>
+            <ul>
+                <li>The questionnaire has been deleted</li>
+                <li>The link was copied incorrectly</li>
+                <li>The questionnaire was never created</li>
+            </ul>
+        </div>
+        
+        <div class="actions">
+            <a href="/" class="btn btn-primary">Go to Homepage</a>
+            <a href="/login/" class="btn btn-secondary">Login to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.error-content {
+    max-width: 600px;
+    text-align: center;
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.error-icon {
+    margin-bottom: 30px;
+}
+
+.error-content h1 {
+    color: #2c3e50;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.error-content h2 {
+    color: #f44336;
+    font-size: 1.3em;
+    margin-bottom: 30px;
+    font-weight: 400;
+}
+
+.error-message {
+    background: #ffebee;
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    border-left: 5px solid #f44336;
+    text-align: left;
+}
+
+.error-message p {
+    margin-bottom: 15px;
+    color: #c62828;
+}
+
+.error-message ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.error-message li {
+    margin-bottom: 8px;
+    padding-left: 20px;
+    position: relative;
+    color: #c62828;
+}
+
+.error-message li:before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #f44336;
+    font-weight: bold;
+}
+
+.actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 12px 25px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2980b9, #1f5f8b);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+@media (max-width: 768px) {
+    .error-content {
+        padding: 25px;
+    }
+    
+    .error-content h1 {
+        font-size: 2em;
+    }
+    
+    .actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}
+
+
+

@@ -1,0 +1,168 @@
+{% extends 'frontend/index.html' %}
+
+{% block title %}Employee Satisfaction Questionnaire - Kobo{% endblock %}
+
+{% block header %}Employee Satisfaction Questionnaire{% endblock %}
+
+{% block content %}
+<section id="questionnaire">
+    <!-- Always show the questionnaire form, even if they've completed it before -->
+    <div class="questionnaire-instructions">
+        <h2>Employee Satisfaction Questionnaire</h2>
+        <div class="instructions-card">
+            <h3>Instructions</h3>
+            <p>Please rate each statement based on your level of agreement using the scale below:</p>
+            <div class="scale-reference">
+                <div class="scale-item">
+                    <span class="scale-number">1</span>
+                    <span class="scale-label">Strongly Disagree</span>
+                </div>
+                <div class="scale-item">
+                    <span class="scale-number">2</span>
+                    <span class="scale-label">Disagree</span>
+                </div>
+                <div class="scale-item">
+                    <span class="scale-number">3</span>
+                    <span class="scale-label">Neutral</span>
+                </div>
+                <div class="scale-item">
+                    <span class="scale-number">4</span>
+                    <span class="scale-label">Agree</span>
+                </div>
+                <div class="scale-item">
+                    <span class="scale-number">5</span>
+                    <span class="scale-label">Strongly Agree</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <form method="post" class="questionnaire-form" id="questionnaireForm">
+        {% csrf_token %}
+        
+        {% for section in sections %}
+        <div class="questionnaire-section">
+            <div class="section-header">
+                <h3>Section {{ forloop.counter }}: {{ section.name }}</h3>
+                <p class="section-description">{{ section.description }}</p>
+            </div>
+            
+            <div class="questions-container">
+                {% for question in section.questions.all %}
+                <div class="question-item">
+                    <div class="question-text">
+                        <label for="question_{{ question.id }}">{{ forloop.counter }}. {{ question.text }}</label>
+                    </div>
+                    <div class="question-options">
+                        {% for value, label in scale_choices %}
+                        <div class="radio-option">
+                            <input type="radio" 
+                                   id="question_{{ question.id }}_{{ value }}" 
+                                   name="question_{{ question.id }}" 
+                                   value="{{ value }}" 
+                                   required>
+                            <label for="question_{{ question.id }}_{{ value }}">{{ value }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        <div class="review-section">
+            <div class="review-header">
+                <h3>Additional Review</h3>
+                <p>Please share any additional thoughts, suggestions, or feedback you have about your work experience.</p>
+            </div>
+            <div class="review-input">
+                <textarea 
+                    id="review" 
+                    name="review" 
+                    required 
+                    class="form-control review-textarea" 
+                    placeholder="Please provide your review here..."
+                    rows="6"
+                ></textarea>
+                <div class="review-required">
+                    <span class="required-indicator">*</span> Review is required
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success btn-large">Submit Questionnaire</button>
+            <button type="button" class="btn btn-secondary" onclick="clearForm()">Clear All</button>
+        </div>
+    </form>
+</section>
+
+<script>
+function clearForm() {
+    if (confirm('Are you sure you want to clear all responses?')) {
+        document.getElementById('questionnaireForm').reset();
+    }
+}
+
+// Add form validation
+document.getElementById('questionnaireForm').addEventListener('submit', function(e) {
+    const requiredFields = document.querySelectorAll('input[type="radio"]:required');
+    const sections = document.querySelectorAll('.questionnaire-section');
+    const reviewField = document.getElementById('review');
+    let allAnswered = true;
+    let reviewValid = true;
+    
+    // Validate review
+    if (!reviewField.value.trim()) {
+        reviewValid = false;
+        allAnswered = false;
+        reviewField.style.borderColor = '#e74c3c';
+        reviewField.style.boxShadow = '0 0 0 2px rgba(231, 76, 60, 0.2)';
+    } else {
+        reviewField.style.borderColor = '#27ae60';
+        reviewField.style.boxShadow = '0 0 0 2px rgba(39, 174, 96, 0.2)';
+    }
+    
+    // Validate questionnaire sections
+    sections.forEach((section, sectionIndex) => {
+        const questions = section.querySelectorAll('.question-item');
+        let sectionAnswered = true;
+        
+        questions.forEach((question, questionIndex) => {
+            const radios = question.querySelectorAll('input[type="radio"]');
+            const isAnswered = Array.from(radios).some(radio => radio.checked);
+            
+            if (!isAnswered) {
+                sectionAnswered = false;
+                allAnswered = false;
+            }
+        });
+        
+        if (!sectionAnswered) {
+            section.style.borderLeft = '4px solid #e74c3c';
+        } else {
+            section.style.borderLeft = '4px solid #27ae60';
+        }
+    });
+    
+    if (!allAnswered || !reviewValid) {
+        e.preventDefault();
+        let errorMessage = 'Please complete the following before submitting:\n';
+        if (!allAnswered) errorMessage += '• Answer all questions\n';
+        if (!reviewValid) errorMessage += '• Provide review';
+        alert(errorMessage);
+        return false;
+    }
+    
+    // If validation passes, show confirmation
+    const confirmed = confirm('Are you sure you want to submit this questionnaire? This action cannot be undone.');
+    if (!confirmed) {
+        e.preventDefault();
+        return false;
+    }
+    
+    return true;
+});
+</script>
+{% endblock %}
