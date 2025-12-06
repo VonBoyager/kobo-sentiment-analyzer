@@ -14,33 +14,25 @@ logger = logging.getLogger(__name__)
 # Download NLTK data if needed
 def _ensure_nltk_data():
     """Ensure all required NLTK data is downloaded"""
-    try:
-        nltk.data.find('tokenizers/punkt')
-    except LookupError:
-        nltk.download('punkt', quiet=True)
+    required_packages = ['punkt', 'punkt_tab', 'stopwords', 'wordnet', 'omw-1.4']
     
-    try:
-        nltk.data.find('tokenizers/punkt_tab')
-    except LookupError:
-        nltk.download('punkt_tab', quiet=True)
-    
-    try:
-        nltk.data.find('corpora/stopwords')
-    except LookupError:
-        nltk.download('stopwords', quiet=True)
-    
-    try:
-        nltk.data.find('corpora/wordnet')
-    except LookupError:
-        nltk.download('wordnet', quiet=True)
-    
-    try:
-        nltk.data.find('corpora/omw-1.4')
-    except LookupError:
-        nltk.download('omw-1.4', quiet=True)
+    for package in required_packages:
+        try:
+            if package in ['punkt', 'punkt_tab']:
+                nltk.data.find(f'tokenizers/{package}')
+            elif package in ['stopwords', 'wordnet', 'omw-1.4']:
+                nltk.data.find(f'corpora/{package}')
+        except (LookupError, OSError):
+            try:
+                nltk.download(package, quiet=True)
+            except Exception as e:
+                logger.warning(f"Could not download NLTK package '{package}': {e}")
 
 # Initialize NLTK data on module import
-_ensure_nltk_data()
+try:
+    _ensure_nltk_data()
+except Exception as e:
+    logger.warning(f"NLTK data initialization warning: {e}")
 
 # Initialize stop words and lemmatizer
 _stop_words = set(stopwords.words('english'))

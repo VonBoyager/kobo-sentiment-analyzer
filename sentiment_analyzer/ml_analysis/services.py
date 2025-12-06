@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import joblib
 import os
+import logging
 from typing import Dict, List, Tuple, Optional
 from django.conf import settings
 from django.db import transaction
@@ -11,6 +12,10 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score, accuracy_score, classification_report
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
+# Set up logger early so it's available for import error handling
+logger = logging.getLogger(__name__)
+
 try:
     from bertopic import BERTopic
     from bertopic.vectorizers import ClassTfidfTransformer
@@ -22,8 +27,6 @@ except ImportError:
     SentenceTransformer = None
     BERTOPIC_AVAILABLE = False
     logger.warning("BERTopic not available. Install with: pip install bertopic sentence-transformers")
-# from sentence_transformers import SentenceTransformer
-import logging
 
 from .models import (
     SentimentAnalysis, TopicAnalysis, SectionTopicCorrelation, 
@@ -31,8 +34,6 @@ from .models import (
 )
 from frontend.models import QuestionnaireResponse, SectionScore
 from .preprocessing import TextPreprocessor
-
-logger = logging.getLogger(__name__)
 
 class SentimentAnalyzer:
     """VADER-based sentiment analysis service"""
@@ -797,9 +798,21 @@ class SectionCorrelationAnalyzer:
             }
             
             # Step 4: Extract specialized words for each section (excluding common words)
+            # Map column names to section names
+            section_name_map = {
+                'work_life_balance': 'Work-Life Balance',
+                'culture_values': 'Culture & Values',
+                'diversity_inclusion': 'Diversity & Inclusion',
+                'career_opp': 'Career Development',
+                'comp_benefits': 'Compensation & Benefits',
+                'senior_mgmt': 'Management & Leadership',
+            }
+            
             for col in target_columns:
                 if col not in self.models or col not in target_ratings:
                     continue
+                
+                section_name = section_name_map.get(col, col.replace('_', ' ').title())
                 
                 model = self.models[col]
                 actual_ratings = target_ratings[col]
@@ -815,18 +828,6 @@ class SectionCorrelationAnalyzer:
                 else:
                     correlation = 0.0
                     logger.warning(f"Insufficient data for correlation calculation in {col} ({section_name}): only {len(actual_ratings)} samples")
-                
-                # Map column names to section names
-                section_name_map = {
-                    'work_life_balance': 'Work-Life Balance',
-                    'culture_values': 'Culture & Values',
-                    'diversity_inclusion': 'Diversity & Inclusion',
-                    'career_opp': 'Career Development',
-                    'comp_benefits': 'Compensation & Benefits',
-                    'senior_mgmt': 'Management & Leadership',
-                }
-                
-                section_name = section_name_map.get(col, col.replace('_', ' ').title())
                 
                 # Extract specialized words from "lacking" texts for this section
                 if col in lacking_data and len(lacking_data[col]) > 0:

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kobo Sentiment Analyzer</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e2e8f0;
+        }
+        
+        .loading-container {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(20, 184, 166, 0.2);
+            border-top-color: #14b8a6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        p {
+            color: #94a3b8;
+            font-family: 'Source Sans 3', sans-serif;
+        }
+        
+        .redirect-note {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(20, 184, 166, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(20, 184, 166, 0.2);
+        }
+        
+        .redirect-note a {
+            color: #14b8a6;
+            text-decoration: none;
+        }
+        
+        .redirect-note a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <h1>Kobo Sentiment Analyzer</h1>
+        <p>Loading application...</p>
+        
+        <div class="redirect-note">
+            <p>If not redirected automatically, <a href="http://localhost:8000">click here</a></p>
+        </div>
+    </div>
+    
+    <script>
+        // Redirect to Django server after a short delay
+        setTimeout(function() {
+            window.location.href = 'http://localhost:8000';
+        }, 2000);
+    </script>
+</body>
+</html>
+
