@@ -210,6 +210,8 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 default_hosts = 'localhost,127.0.0.1,web,web:8000'
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=default_hosts, cast=Csv() if USE_DECOUPLE else list)
 
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost,http://127.0.0.1,http://152.42.220.146', cast=Csv() if USE_DECOUPLE else list)
+
 # Database SSL configuration
 DATABASES['default']['OPTIONS'] = {'sslmode': config('DB_SSLMODE', default='disable')}
 

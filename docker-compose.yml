@@ -47,7 +47,8 @@ services:
       - DB_PORT=5432
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,web,web:8000,152.42.220.146}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost,http://127.0.0.1,http://152.42.220.146}
     volumes:
       - ./media:/app/media
       - ./logs:/app/logs
@@ -64,6 +65,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # Nginx Reverse Proxy
   nginx:
@@ -106,6 +112,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # Celery Beat (for scheduled tasks)
   celery-beat:
@@ -128,6 +139,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   postgres_data:
