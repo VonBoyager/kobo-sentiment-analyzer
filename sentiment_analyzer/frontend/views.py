@@ -33,13 +33,27 @@ def home(request):
     from django.http import HttpResponse
     
     # Path to React app's index.html (built version)
-    react_index_path = os.path.join(settings.BASE_DIR, 'frontend', 'static', 'frontend', 'dist', 'index.html')
+    # Check multiple possible locations
+    possible_paths = [
+        os.path.join(settings.BASE_DIR, 'frontend', 'static', 'frontend', 'dist', 'index.html'),
+        os.path.join('/app', 'sentiment_analyzer', 'frontend', 'static', 'frontend', 'dist', 'index.html'),
+        os.path.join(settings.BASE_DIR.parent, 'frontend', 'static', 'frontend', 'dist', 'index.html'),
+    ]
+    
+    react_index_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            react_index_path = path
+            break
     
     # If React app exists, serve it
-    if os.path.exists(react_index_path):
-        with open(react_index_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        return HttpResponse(content, content_type='text/html')
+    if react_index_path:
+        try:
+            with open(react_index_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            return HttpResponse(content, content_type='text/html')
+        except Exception as e:
+            logger.error(f"Error serving React app: {e}")
     
     # Fallback to old Django views
     if request.user.is_authenticated:
