@@ -1,0 +1,14 @@
+{% extends 'frontend/index.html' %}
+
+{% block title %}About - Kobo Frontend{% endblock %}
+
+{% block header %}About Kobo{% endblock %}
+
+{% block content %}
+<section id="about">
+    <h2>About Us</h2>
+    <p>This is a Django-powered frontend application.</p>
+    <p>We use Django templates for server-side rendering and static files for styling and JavaScript.</p>
+    <p>Current time: {{ current_time }}</p>
+</section>
+{% endblock %}

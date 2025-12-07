@@ -1,0 +1,58 @@
+{% extends 'tenants/base.html' %}
+
+{% block page_title %}Admin - Model Management - {{ tenant.name }}{% endblock %}
+
+{% block tenant_content %}
+<div class="admin-models-section">
+    <div class="admin-header">
+        <h3>🤖 Model Management (Admin Only)</h3>
+        <p>Manage ML models for this tenant. Only administrators can access this section.</p>
+    </div>
+    
+    <div class="model-actions">
+        <a href="{% url 'tenants:upload_model' %}" class="btn btn-success">Upload New Model</a>
+        <a href="{% url 'tenants:analyze' %}" class="btn btn-primary">Test Models</a>
+    </div>
+    
+    {% if models %}
+    <div class="models-list">
+        <h4>Available Models</h4>
+        <div class="models-grid">
+            {% for model in models %}
+            <div class="model-card">
+                <div class="model-header">
+                    <h5>{{ model.name }}</h5>
+                    <span class="model-version">v{{ model.version }}</span>
+                </div>
+                <div class="model-details">
+                    <p><strong>Type:</strong> {{ model.get_model_type_display }}</p>
+                    <p><strong>Created:</strong> {{ model.created_at|date:"M d, Y" }}</p>
+                    {% if model.accuracy %}
+                    <p><strong>Accuracy:</strong> {{ model.accuracy|floatformat:2 }}%</p>
+                    {% endif %}
+                    {% if model.training_data_size %}
+                    <p><strong>Training Data:</strong> {{ model.training_data_size }} samples</p>
+                    {% endif %}
+                    {% if model.description %}
+                    <p><strong>Description:</strong> {{ model.description }}</p>
+                    {% endif %}
+                </div>
+                <div class="model-actions">
+                    <a href="{{ model.model_file.url }}" class="btn btn-sm btn-info" download>Download</a>
+                    <span class="model-status {% if model.is_active %}active{% else %}inactive{% endif %}">
+                        {% if model.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="no-models">
+        <h4>No Models Found</h4>
+        <p>No ML models have been uploaded for this tenant yet.</p>
+        <a href="{% url 'tenants:upload_model' %}" class="btn btn-success">Upload Your First Model</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

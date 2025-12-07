@@ -1,0 +1,245 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Thank You - {{ questionnaire.title }}{% endblock %}
+
+{% block content %}
+<div class="thank-you-container">
+    <div class="thank-you-content">
+        <div class="success-icon">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#4CAF50"/>
+                <path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        
+        <h1>Thank You!</h1>
+        <h2>Your feedback has been submitted successfully</h2>
+        
+        <div class="thank-you-message">
+            <p>We appreciate you taking the time to complete the <strong>{{ questionnaire.title }}</strong>.</p>
+            <p>Your responses will help us improve our organization and create a better workplace for everyone.</p>
+        </div>
+        
+        <div class="questionnaire-info">
+            <div class="info-card">
+                <h3>Questionnaire Details</h3>
+                <ul>
+                    <li><strong>Title:</strong> {{ questionnaire.title }}</li>
+                    <li><strong>Submitted:</strong> {{ questionnaire.current_responses }} responses</li>
+                    <li><strong>Status:</strong> 
+                        {% if questionnaire.is_available %}
+                            <span class="status-active">Active</span>
+                        {% else %}
+                            <span class="status-inactive">Closed</span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="next-steps">
+            <h3>What happens next?</h3>
+            <ul>
+                <li>Your responses will be analyzed and included in our employee satisfaction report</li>
+                <li>Management will review the feedback to identify areas for improvement</li>
+                <li>Action plans will be developed based on the survey results</li>
+                <li>Updates on progress will be shared with all employees</li>
+            </ul>
+        </div>
+        
+        <div class="contact-info">
+            <p>If you have any questions about this survey or would like to provide additional feedback, please contact HR.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+.thank-you-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.thank-you-content {
+    max-width: 800px;
+    text-align: center;
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.success-icon {
+    margin-bottom: 30px;
+}
+
+.success-icon svg {
+    animation: checkmark 0.6s ease-in-out;
+}
+
+@keyframes checkmark {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.thank-you-content h1 {
+    color: #2c3e50;
+    font-size: 3em;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.thank-you-content h2 {
+    color: #3498db;
+    font-size: 1.5em;
+    margin-bottom: 30px;
+    font-weight: 400;
+}
+
+.thank-you-message {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    border-left: 5px solid #3498db;
+}
+
+.thank-you-message p {
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    color: #495057;
+}
+
+.thank-you-message p:last-child {
+    margin-bottom: 0;
+}
+
+.questionnaire-info {
+    margin: 30px 0;
+}
+
+.info-card {
+    background: #e3f2fd;
+    padding: 25px;
+    border-radius: 10px;
+    text-align: left;
+    border: 1px solid #bbdefb;
+}
+
+.info-card h3 {
+    color: #1976d2;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.info-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.info-card li {
+    margin-bottom: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #bbdefb;
+}
+
+.info-card li:last-child {
+    border-bottom: none;
+}
+
+.status-active {
+    color: #4CAF50;
+    font-weight: 600;
+}
+
+.status-inactive {
+    color: #f44336;
+    font-weight: 600;
+}
+
+.next-steps {
+    background: #fff3cd;
+    padding: 25px;
+    border-radius: 10px;
+    margin: 30px 0;
+    border-left: 5px solid #ffc107;
+    text-align: left;
+}
+
+.next-steps h3 {
+    color: #856404;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.next-steps ul {
+    list-style: none;
+    padding: 0;
+}
+
+.next-steps li {
+    margin-bottom: 10px;
+    padding-left: 25px;
+    position: relative;
+    color: #856404;
+}
+
+.next-steps li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.contact-info {
+    background: #d1ecf1;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 5px solid #17a2b8;
+    margin-top: 30px;
+}
+
+.contact-info p {
+    color: #0c5460;
+    margin: 0;
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .thank-you-content {
+        padding: 25px;
+    }
+    
+    .thank-you-content h1 {
+        font-size: 2.5em;
+    }
+    
+    .thank-you-content h2 {
+        font-size: 1.3em;
+    }
+    
+    .thank-you-message,
+    .info-card,
+    .next-steps,
+    .contact-info {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+
+

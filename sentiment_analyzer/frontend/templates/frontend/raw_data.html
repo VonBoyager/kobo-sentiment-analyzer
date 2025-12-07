@@ -1,0 +1,144 @@
+{% extends 'frontend/index.html' %}
+
+{% block title %}View Dataset - Kobo{% endblock %}
+
+{% block header %}View Dataset{% endblock %}
+
+{% block content %}
+<div class="dataset-container">
+    <div class="dataset-header">
+        <h2>Your Dataset</h2>
+        <p>View and analyze all your submitted responses and uploaded data.</p>
+        
+        <div class="dataset-stats">
+            <div class="stat-item">
+                <span class="stat-number">{{ total_responses }}</span>
+                <span class="stat-label">Total Responses</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="filters-section">
+        <form method="GET" class="filters-form">
+            <div class="filter-group">
+                <label for="search">Search:</label>
+                <input type="text" id="search" name="search" value="{{ search_query }}" placeholder="Search responses...">
+            </div>
+            
+            <div class="filter-group">
+                <label for="sentiment">Sentiment:</label>
+                <select id="sentiment" name="sentiment">
+                    <option value="">All Sentiments</option>
+                    {% for choice in sentiment_choices %}
+                        <option value="{{ choice }}" {% if choice == sentiment_filter %}selected{% endif %}>{{ choice|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="section">Section:</label>
+                <select id="section" name="section">
+                    <option value="">All Sections</option>
+                    {% for choice in section_choices %}
+                        <option value="{{ choice }}" {% if choice == section_filter %}selected{% endif %}>{{ choice }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="source">Source:</label>
+                <select id="source" name="source">
+                    <option value="">All Sources</option>
+                    {% for choice in source_choices %}
+                        <option value="{{ choice }}" {% if choice == source_filter %}selected{% endif %}>{{ choice|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <a href="{% url 'frontend:raw_data' %}" class="btn btn-secondary">Clear Filters</a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Data Table -->
+    <div class="data-table-container">
+        {% if responses %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Review</th>
+                            <th>Sentiment</th>
+                            <th>Score</th>
+                            <th>Submitted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for response in responses %}
+                            <tr>
+                                <td>{{ response.user.username }}</td>
+                                <td class="review-cell">
+                                    <div class="review-preview">
+                                        {{ response.review|truncatechars:100 }}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if response.sentiment_analysis %}
+                                        <span class="sentiment-badge sentiment-{{ response.sentiment_analysis.sentiment_label }}">
+                                            {{ response.sentiment_analysis.sentiment_label|title }}
+                                        </span>
+                                    {% else %}
+                                        <span class="sentiment-badge sentiment-neutral">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if response.sentiment_analysis %}
+                                        {{ response.sentiment_analysis.compound_score|floatformat:2 }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>{{ response.submitted_at|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'frontend:questionnaire_results' response.id %}" class="btn btn-sm btn-primary">View Details</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if responses.has_other_pages %}
+                <div class="pagination">
+                    {% if responses.has_previous %}
+                        <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if sentiment_filter %}&sentiment={{ sentiment_filter }}{% endif %}{% if section_filter %}&section={{ section_filter }}{% endif %}{% if source_filter %}&source={{ source_filter }}{% endif %}" class="btn btn-sm">First</a>
+                        <a href="?page={{ responses.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sentiment_filter %}&sentiment={{ sentiment_filter }}{% endif %}{% if section_filter %}&section={{ section_filter }}{% endif %}{% if source_filter %}&source={{ source_filter }}{% endif %}" class="btn btn-sm">Previous</a>
+                    {% endif %}
+                    
+                    <span class="page-info">
+                        Page {{ responses.number }} of {{ responses.paginator.num_pages }}
+                    </span>
+                    
+                    {% if responses.has_next %}
+                        <a href="?page={{ responses.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sentiment_filter %}&sentiment={{ sentiment_filter }}{% endif %}{% if section_filter %}&section={{ section_filter }}{% endif %}{% if source_filter %}&source={{ source_filter }}{% endif %}" class="btn btn-sm">Next</a>
+                        <a href="?page={{ responses.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sentiment_filter %}&sentiment={{ sentiment_filter }}{% endif %}{% if section_filter %}&section={{ section_filter }}{% endif %}{% if source_filter %}&source={{ source_filter }}{% endif %}" class="btn btn-sm">Last</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="no-data">
+                <div class="no-data-icon">📊</div>
+                <h3>No Data Found</h3>
+                <p>No responses match your current filters. Try adjusting your search criteria or upload some data.</p>
+                <a href="{% url 'frontend:upload_data' %}" class="btn btn-primary">Upload Data</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
