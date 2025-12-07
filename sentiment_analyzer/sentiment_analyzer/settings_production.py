@@ -206,7 +206,9 @@ CELERY_WORKER_MAX_TASKS_PER_CHILD = 1000
 
 # Production overrides
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv() if USE_DECOUPLE else list)
+# Allow web container hostname for internal Docker networking
+default_hosts = 'localhost,127.0.0.1,web,web:8000'
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=default_hosts, cast=Csv() if USE_DECOUPLE else list)
 
 # Database SSL configuration
 DATABASES['default']['OPTIONS'] = {'sslmode': config('DB_SSLMODE', default='disable')}

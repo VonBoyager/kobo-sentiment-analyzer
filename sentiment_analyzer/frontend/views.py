@@ -35,8 +35,9 @@ def home(request):
     # Path to React app's index.html (built version)
     # Check multiple possible locations
     possible_paths = [
-        os.path.join(settings.BASE_DIR, 'frontend', 'static', 'frontend', 'dist', 'index.html'),
         os.path.join('/app', 'sentiment_analyzer', 'frontend', 'static', 'frontend', 'dist', 'index.html'),
+        os.path.join('/app', 'frontend', 'dist', 'index.html'),
+        os.path.join(settings.BASE_DIR, 'frontend', 'static', 'frontend', 'dist', 'index.html'),
         os.path.join(settings.BASE_DIR.parent, 'frontend', 'static', 'frontend', 'dist', 'index.html'),
     ]
     
@@ -44,6 +45,7 @@ def home(request):
     for path in possible_paths:
         if os.path.exists(path):
             react_index_path = path
+            logger.info(f"Serving React app from: {react_index_path}")
             break
     
     # If React app exists, serve it
@@ -51,9 +53,14 @@ def home(request):
         try:
             with open(react_index_path, 'r', encoding='utf-8') as f:
                 content = f.read()
+            # Update asset paths to use /static/ prefix
+            content = content.replace('src="/assets/', 'src="/static/frontend/dist/assets/')
+            content = content.replace('href="/assets/', 'href="/static/frontend/dist/assets/')
             return HttpResponse(content, content_type='text/html')
         except Exception as e:
             logger.error(f"Error serving React app: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
     
     # Fallback to old Django views
     if request.user.is_authenticated:
