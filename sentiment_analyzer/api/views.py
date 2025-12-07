@@ -18,9 +18,10 @@ from .serializers import (
     MLModelSerializer, TrainingDataSerializer, UserFeedbackSerializer,
     TenantSerializer, TenantFileSerializer, TenantModelSerializer, TenantUserSerializer,
     APITokenSerializer, APIRequestSerializer, APILogSerializer,
-    APIConfigurationSerializer, APIVersionSerializer, APIStatsSerializer, MLStatsSerializer
+    APIConfigurationSerializer, APIVersionSerializer, APIStatsSerializer, MLStatsSerializer,
+    SpecialQuestionnaireSerializer
 )
-from frontend.models import QuestionnaireResponse, QuestionnaireSection, QuestionnaireQuestion, SectionScore
+from frontend.models import QuestionnaireResponse, QuestionnaireSection, QuestionnaireQuestion, SectionScore, SpecialQuestionnaire
 from ml_analysis.models import SentimentAnalysis, TopicAnalysis, SectionTopicCorrelation, MLModel, TrainingData, UserFeedback
 from ml_analysis.services import MLPipeline
 from tenants.models import Tenant, TenantFile, TenantModel, TenantUser
@@ -86,6 +87,32 @@ class QuestionnaireResponseViewSet(viewsets.ReadOnlyModelViewSet):
         response = self.get_object()
         serializer = CompleteAnalysisSerializer(response)
         return Response(serializer.data)
+
+class SpecialQuestionnaireViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing special questionnaires"""
+    queryset = SpecialQuestionnaire.objects.all()
+    serializer_class = SpecialQuestionnaireSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        # Only allow users to see questionnaires they created (or admins to see all if needed)
+        return SpecialQuestionnaire.objects.filter(created_by=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def toggle_active(self, request, pk=None):
+        """Toggle the active status of a questionnaire (Lock/Unlock)"""
+        questionnaire = self.get_object()
+        questionnaire.is_active = not questionnaire.is_active
+        questionnaire.save()
+        status_msg = "activated" if questionnaire.is_active else "deactivated"
+        return Response({
+            'status': 'success',
+            'message': f'Questionnaire {status_msg}',
+            'is_active': questionnaire.is_active
+        })
 
 class SentimentAnalysisViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for sentiment analysis results"""
@@ -598,29 +625,27 @@ class ResultsDataView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class TestModelsView(APIView):
-    """Test ML models - runs in background thread"""
+    """Test ML models - runs synchronously to ensure data availability"""
     permission_classes = [permissions.AllowAny]  # Allow anonymous for development
     
     def post(self, request):
-        import threading
-        
-        def train_models_async():
-            """Train models in background thread"""
-            try:
-                ml_pipeline = MLPipeline()
-                results = ml_pipeline.train_all_models()
-                logger.info(f"Model training completed: {results}")
-            except Exception as e:
-                logger.error(f"Error in background model training: {e}", exc_info=True)
-        
-        # Start training in background thread
-        thread = threading.Thread(target=train_models_async, daemon=True)
-        thread.start()
-        
-        return Response({
-            'status': 'success',
-            'message': 'Models are being trained in the background. You can continue using the application.',
-        })
+        try:
+            ml_pipeline = MLPipeline()
+            # Run synchronously so the frontend waits and gets fresh data
+            results = ml_pipeline.train_all_models()
+            logger.info(f"Model training completed: {results}")
+            
+            return Response({
+                'status': 'success',
+                'message': 'Models trained successfully.',
+                'results': results
+            })
+        except Exception as e:
+            logger.error(f"Error in model training: {e}", exc_info=True)
+            return Response({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)
 
 class CSVUploadView(APIView):
     """Upload CSV file"""

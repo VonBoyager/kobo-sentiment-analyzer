@@ -15,6 +15,7 @@ router.register(r'feedback', views.UserFeedbackViewSet, basename='feedback')
 router.register(r'tenants', views.TenantViewSet, basename='tenant')
 router.register(r'tenant-files', views.TenantFileViewSet, basename='tenantfile')
 router.register(r'tenant-models', views.TenantModelViewSet, basename='tenantmodel')
+router.register(r'special-questionnaires', views.SpecialQuestionnaireViewSet, basename='specialquestionnaire')
 
 urlpatterns = [
     # API router endpoints

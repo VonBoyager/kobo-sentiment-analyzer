@@ -2,8 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import APIToken, APIRequest, APILog, APIConfiguration, APIVersion
 from frontend.models import (
-    QuestionnaireResponse, QuestionResponse, SectionScore, 
-    QuestionnaireSection, QuestionnaireQuestion
+    QuestionnaireResponse, QuestionResponse, SectionScore,
+    QuestionnaireSection, QuestionnaireQuestion, SpecialQuestionnaire
 )
 from ml_analysis.models import (
     SentimentAnalysis, TopicAnalysis, SectionTopicCorrelation,
@@ -30,6 +30,26 @@ class QuestionnaireQuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionnaireQuestion
         fields = ['id', 'section', 'text', 'order']
+
+class SpecialQuestionnaireSerializer(serializers.ModelSerializer):
+    created_by = UserSerializer(read_only=True)
+    unique_url = serializers.SerializerMethodField()
+    is_expired = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = SpecialQuestionnaire
+        fields = [
+            'id', 'title', 'description', 'unique_token', 'created_at',
+            'expires_at', 'is_active', 'max_responses', 'current_responses',
+            'created_by', 'unique_url', 'is_expired'
+        ]
+        read_only_fields = ['unique_token', 'created_at', 'current_responses', 'created_by']
+
+    def get_unique_url(self, obj):
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.unique_url)
+        return obj.unique_url
 
 class QuestionResponseSerializer(serializers.ModelSerializer):
     question = QuestionnaireQuestionSerializer(read_only=True)

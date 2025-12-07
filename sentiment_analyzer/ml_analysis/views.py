@@ -116,11 +116,12 @@ class MLAnalysisView(View):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class TrainModelsView(View):
-    """Train ML models endpoint"""
+    """Train ML models endpoint - runs synchronously to ensure data availability"""
     
     def post(self, request):
         try:
             pipeline = MLPipeline()
+            # Run synchronously so the frontend waits
             results = pipeline.train_all_models()
             
             return JsonResponse({
