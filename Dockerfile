@@ -46,16 +46,16 @@ COPY . .
 # Copy built frontend assets
 COPY --from=frontend-builder /app/frontend/dist /app/sentiment_analyzer/frontend/static/frontend/dist
 
+# Create non-root user
+RUN adduser --disabled-password --gecos '' appuser
+
 # Create necessary directories
 RUN mkdir -p /app/logs /app/media /app/static && \
-    chown -R appuser:appuser /app/logs /app/media /app/static
+    chown -R appuser:appuser /app
 
 # Collect static files
 RUN cd sentiment_analyzer && python manage.py collectstatic --noinput --settings=sentiment_analyzer.settings
 
-# Create non-root user
-RUN adduser --disabled-password --gecos '' appuser && \
-    chown -R appuser:appuser /app
 USER appuser
 
 # Expose port
