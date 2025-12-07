@@ -2,6 +2,8 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.utils.decorators import method_decorator
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
@@ -277,6 +279,7 @@ class MLStatsView(APIView):
         serializer = MLStatsSerializer(stats)
         return Response(serializer.data)
 
+@method_decorator(ensure_csrf_cookie, name='dispatch')
 class HealthCheckView(APIView):
     """Health check endpoint"""
     permission_classes = [permissions.AllowAny]
