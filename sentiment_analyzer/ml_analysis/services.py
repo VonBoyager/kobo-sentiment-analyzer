@@ -11,6 +11,10 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score, accuracy_score, classification_report
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+import logging
+
+logger = logging.getLogger(__name__)
+
 try:
     from bertopic import BERTopic
     from bertopic.vectorizers import ClassTfidfTransformer
@@ -23,7 +27,6 @@ except ImportError:
     BERTOPIC_AVAILABLE = False
     logger.warning("BERTopic not available. Install with: pip install bertopic sentence-transformers")
 # from sentence_transformers import SentenceTransformer
-import logging
 
 from .models import (
     SentimentAnalysis, TopicAnalysis, SectionTopicCorrelation, 
