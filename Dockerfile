@@ -34,11 +34,15 @@ RUN apt-get update \
         build-essential \
         libpq-dev \
         curl \
-        && rm -rf /var/lib/apt/lists/*
+    # Install pip packages that need compiling
+    && pip install --no-cache-dir -r requirements.txt \
+    # Clean up build dependencies
+    && apt-get purge -y --auto-remove build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# This is now handled in the previous RUN command
 
 # Copy project
 COPY . .
