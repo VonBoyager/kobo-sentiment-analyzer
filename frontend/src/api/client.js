@@ -10,11 +10,31 @@ const apiClient = axios.create({
   }
 })
 
+// Helper to get cookie value
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
 // Request interceptor for authentication
 apiClient.interceptors.request.use(
   (config) => {
     // Add CSRF token if available
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value
+    let csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value
+    if (!csrfToken) {
+      csrfToken = getCookie('csrftoken');
+    }
+    
     if (csrfToken) {
       config.headers['X-CSRFToken'] = csrfToken
     }
