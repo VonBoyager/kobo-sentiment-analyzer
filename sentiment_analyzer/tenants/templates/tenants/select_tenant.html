@@ -1,0 +1,51 @@
+{% extends 'tenants/base.html' %}
+
+{% block page_title %}Select Tenant{% endblock %}
+
+{% block tenant_content %}
+<div class="tenant-selection">
+    <h3>Your Tenants</h3>
+    
+    {% if user_tenants %}
+    <div class="tenant-list">
+        {% for tenant_user in user_tenants %}
+        <div class="tenant-card">
+            <h4>{{ tenant_user.tenant.name }}</h4>
+            <p>{{ tenant_user.tenant.description|default:"No description" }}</p>
+            <p><strong>Role:</strong> {{ tenant_user.get_role_display }}</p>
+            <p><strong>Created:</strong> {{ tenant_user.tenant.created_at|date:"M d, Y" }}</p>
+            <a href="{% url 'tenants:switch_tenant' tenant_user.tenant.id %}" class="btn btn-primary">
+                Switch to {{ tenant_user.tenant.name }}
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-tenants">
+        <p>You don't have access to any tenants yet.</p>
+        <a href="{% url 'tenants:create_tenant' %}" class="btn btn-success">Create Your First Tenant</a>
+    </div>
+    {% endif %}
+    
+    {% if owned_tenants %}
+    <h3>Tenants You Own</h3>
+    <div class="tenant-list">
+        {% for tenant in owned_tenants %}
+        <div class="tenant-card owner-card">
+            <h4>{{ tenant.name }} <span class="owner-badge">Owner</span></h4>
+            <p>{{ tenant.description|default:"No description" }}</p>
+            <p><strong>Created:</strong> {{ tenant.created_at|date:"M d, Y" }}</p>
+            <a href="{% url 'tenants:switch_tenant' tenant.id %}" class="btn btn-primary">
+                Switch to {{ tenant.name }}
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="create-tenant-section">
+        <h3>Create New Tenant</h3>
+        <a href="{% url 'tenants:create_tenant' %}" class="btn btn-success">Create New Tenant</a>
+    </div>
+</div>
+{% endblock %}

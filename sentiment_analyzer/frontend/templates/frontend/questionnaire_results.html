@@ -1,0 +1,144 @@
+{% extends 'frontend/index.html' %}
+
+{% block title %}Questionnaire Results - Kobo{% endblock %}
+
+{% block header %}Your Questionnaire Results{% endblock %}
+
+{% block content %}
+<section id="questionnaire-results">
+    <div class="results-header">
+        <h2>Employee Satisfaction Results</h2>
+        <p>Submitted on {{ response.submitted_at|date:"F d, Y \a\t g:i A" }}</p>
+    </div>
+    
+    <div class="overall-score">
+        <div class="score-card">
+            <h3>Overall Satisfaction Score</h3>
+            <div class="score-display">
+                <span class="score-number">{{ overall_average|floatformat:2 }}</span>
+                <span class="score-out-of">out of 5.0</span>
+            </div>
+            <div class="score-bar">
+                <div class="score-fill" style="width: {{ overall_average|floatformat:0 }}%"></div>
+            </div>
+            <div class="score-interpretation">
+                {% if overall_average >= 4.0 %}
+                    <span class="score-excellent">🌟 Excellent</span>
+                {% elif overall_average >= 3.0 %}
+                    <span class="score-good">👍 Good</span>
+                {% elif overall_average >= 2.0 %}
+                    <span class="score-fair">😐 Fair</span>
+                {% else %}
+                    <span class="score-poor">😞 Needs Improvement</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="section-scores">
+        <h3>Section Breakdown</h3>
+        <div class="scores-grid">
+            {% for score in section_scores %}
+            <div class="section-score-card">
+                <div class="section-header">
+                    <h4>{{ score.section.name }}</h4>
+                    <span class="section-average">{{ score.average_score|floatformat:2 }}</span>
+                </div>
+                <div class="section-bar">
+                    <div class="section-fill" style="width: {{ score.average_score|floatformat:0 }}%"></div>
+                </div>
+                <div class="section-details">
+                    <small>{{ score.total_questions }} question{{ score.total_questions|pluralize }}</small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    {% if response.review %}
+    <div class="review-display">
+        <h3>Your Review</h3>
+        <div class="review-card">
+            <div class="review-content">
+                {{ response.review|linebreaks }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- ML Insights Section -->
+    {% if ml_insights %}
+    <div class="ml-insights">
+        <h3>🤖 AI-Powered Insights</h3>
+        <div class="insights-grid">
+            {% for insight in ml_insights %}
+            <div class="insight-card">
+                <div class="insight-header">
+                    <h4>
+                        {% if insight.insight_type == 'topic_contribution' %}
+                            📊 Topic Contribution
+                        {% elif insight.insight_type == 'sentiment_trend' %}
+                            😊 Sentiment Analysis
+                        {% elif insight.insight_type == 'section_correlation' %}
+                            🔗 Section Correlation
+                        {% elif insight.insight_type == 'improvement_suggestion' %}
+                            💡 Improvement Suggestion
+                        {% else %}
+                            🔍 Analysis
+                        {% endif %}
+                    </h4>
+                    <span class="confidence-score">Confidence: {{ insight.confidence_score|floatformat:2 }}</span>
+                </div>
+                <div class="insight-content">
+                    <p>{{ insight.insight_text }}</p>
+                </div>
+                {% if insight.related_sections.all %}
+                <div class="related-sections">
+                    <small>Related sections: {{ insight.related_sections.all|join:", " }}</small>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Topic Analysis Section -->
+    {% if topic_analyses %}
+    <div class="topic-analysis">
+        <h3>📈 Topic Analysis</h3>
+        <div class="topics-grid">
+            {% for analysis in topic_analyses %}
+            <div class="topic-card">
+                <div class="topic-header">
+                    <h4>{{ analysis.section.name }}</h4>
+                    <span class="contribution-score">Contribution: {{ analysis.topic_contribution_score|floatformat:2 }}</span>
+                </div>
+                <div class="topic-keywords">
+                    <strong>Key Topics:</strong> {{ analysis.topic_keywords }}
+                </div>
+                <div class="sentiment-indicator">
+                    <span class="sentiment-label">
+                        Sentiment: 
+                        {% if analysis.sentiment_score > 0.1 %}
+                            <span class="positive">😊 Positive</span>
+                        {% elif analysis.sentiment_score < -0.1 %}
+                            <span class="negative">😞 Negative</span>
+                        {% else %}
+                            <span class="neutral">😐 Neutral</span>
+                        {% endif %}
+                    </span>
+                    <span class="sentiment-score">({{ analysis.sentiment_score|floatformat:2 }})</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="results-actions">
+        <a href="{% url 'frontend:sentiment_analysis' %}" class="btn btn-primary">Take Questionnaire Again</a>
+        <a href="{% url 'frontend:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</section>
+{% endblock %}

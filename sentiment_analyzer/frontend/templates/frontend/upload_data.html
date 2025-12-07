@@ -1,0 +1,648 @@
+{% extends 'frontend/index.html' %}
+
+{% block title %}Upload Data - Employee Satisfaction System{% endblock %}
+
+{% block content %}
+<div class="main-content upload-data-page">
+    <div class="content-header">
+        <h1>📤 Upload Employee Data</h1>
+        <p class="welcome-message">Welcome! Upload your employee satisfaction data to get started with powerful insights and analysis.</p>
+    </div>
+
+    <!-- Quick Start Guide -->
+    <div class="quick-start-card">
+        <div class="quick-start-header">
+            <span class="quick-start-icon">🚀</span>
+            <h2>Quick Start Guide</h2>
+        </div>
+        <div class="quick-start-steps">
+            <div class="step-item">
+                <span class="step-number">1</span>
+                <div class="step-content">
+                    <strong>Prepare your CSV file</strong>
+                    <p>Make sure it has the required columns (see details below)</p>
+                </div>
+            </div>
+            <div class="step-item">
+                <span class="step-number">2</span>
+                <div class="step-content">
+                    <strong>Select your file</strong>
+                    <p>Click "Choose File" and select your CSV</p>
+                </div>
+            </div>
+            <div class="step-item">
+                <span class="step-number">3</span>
+                <div class="step-content">
+                    <strong>Upload & Process</strong>
+                    <p>Click "Upload & Process Data" and wait for confirmation</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Instructions -->
+    <div class="upload-instructions">
+        <div class="instruction-cards-container">
+        <div class="instruction-card">
+            <h3>📋 CSV File Requirements</h3>
+            <div class="instruction-content">
+                <p class="intro-text">Your CSV file needs <strong>21 columns in this exact order</strong>. Here's what you need:</p>
+                
+                <div class="simple-requirements">
+                    <div class="req-item">
+                        <span class="req-number">1</span>
+                        <div class="req-content">
+                            <strong>uid</strong> - Unique ID for each employee response
+                        </div>
+                    </div>
+                    <div class="req-item">
+                        <span class="req-number">2</span>
+                        <div class="req-content">
+                            <strong>review_date</strong> - Date (format: YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)
+                        </div>
+                    </div>
+                    <div class="req-item">
+                        <span class="req-number">3-20</span>
+                        <div class="req-content">
+                            <strong>18 Score Columns</strong> - Numbers from 1-5 for each question (see table below)
+                        </div>
+                    </div>
+                    <div class="req-item">
+                        <span class="req-number">21</span>
+                        <div class="req-content">
+                            <strong>free_text_box</strong> - Employee feedback text (must be last column)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="instruction-card">
+            <h3>📊 Complete Column List (In Order)</h3>
+            <div class="instruction-content">
+                <p class="table-intro"><strong>Your CSV header row must have these 21 columns in this exact order:</strong></p>
+                
+                <div class="csv-format-table-container">
+                    <table class="csv-format-table">
+                        <thead>
+                            <tr>
+                                <th>Column #</th>
+                                <th>Column Name</th>
+                                <th>Description</th>
+                                <th>Example Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td><code>uid</code></td>
+                                <td>Unique identifier (UUID, ID, etc.)</td>
+                                <td><code>a20171af-0819-4ab7-beaa-773e896a779b</code></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td><code>review_date</code></td>
+                                <td>Date when review was submitted</td>
+                                <td><code>2024-01-15</code> or <code>2024-01-15 14:30:00</code></td>
+                            </tr>
+                            <tr class="section-header">
+                                <td colspan="4"><strong>Compensation & Benefits Section (Columns 3-5)</strong></td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td><code>salary_fairness</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>4</code></td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td><code>compensation_competitiveness</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>4</code></td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td><code>benefits_adequacy</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>5</code></td>
+                            </tr>
+                            <tr class="section-header">
+                                <td colspan="4"><strong>Work-Life Balance Section (Columns 6-8)</strong></td>
+                            </tr>
+                            <tr>
+                                <td>6</td>
+                                <td><code>workload_balance</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>5</code></td>
+                            </tr>
+                            <tr>
+                                <td>7</td>
+                                <td><code>schedule_flexibility</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>4</code></td>
+                            </tr>
+                            <tr>
+                                <td>8</td>
+                                <td><code>leave_policies_adequacy</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>5</code></td>
+                            </tr>
+                            <tr class="section-header">
+                                <td colspan="4"><strong>Culture & Values Section (Columns 9-11)</strong></td>
+                            </tr>
+                            <tr>
+                                <td>9</td>
+                                <td><code>mission_values_meaningful</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>5</code></td>
+                            </tr>
+                            <tr>
+                                <td>10</td>
+                                <td><code>positive_inclusive_culture</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>5</code></td>
+                            </tr>
+                            <tr>
+                                <td>11</td>
+                                <td><code>company_values_alignment</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>5</code></td>
+                            </tr>
+                            <tr class="section-header">
+                                <td colspan="4"><strong>Diversity & Inclusion Section (Columns 12-14)</strong></td>
+                            </tr>
+                            <tr>
+                                <td>12</td>
+                                <td><code>diversity_hiring_promotion</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>5</code></td>
+                            </tr>
+                            <tr>
+                                <td>13</td>
+                                <td><code>employees_feel_included</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>4</code></td>
+                            </tr>
+                            <tr>
+                                <td>14</td>
+                                <td><code>respectful_welcoming_environment</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>4</code></td>
+                            </tr>
+                            <tr class="section-header">
+                                <td colspan="4"><strong>Career Development Section (Columns 15-17)</strong></td>
+                            </tr>
+                            <tr>
+                                <td>15</td>
+                                <td><code>professional_growth_opportunities</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>4</code></td>
+                            </tr>
+                            <tr>
+                                <td>16</td>
+                                <td><code>training_skill_development</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>4</code></td>
+                            </tr>
+                            <tr>
+                                <td>17</td>
+                                <td><code>clear_career_paths</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>4</code></td>
+                            </tr>
+                            <tr class="section-header">
+                                <td colspan="4"><strong>Management & Leadership Section (Columns 18-20)</strong></td>
+                            </tr>
+                            <tr>
+                                <td>18</td>
+                                <td><code>manager_communication_clarity</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>5</code></td>
+                            </tr>
+                            <tr>
+                                <td>19</td>
+                                <td><code>manager_support_for_employees</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>4</code></td>
+                            </tr>
+                            <tr>
+                                <td>20</td>
+                                <td><code>raising_concerns_comfortability</code></td>
+                                <td>Score: 1-5</td>
+                                <td><code>5</code></td>
+                            </tr>
+                            <tr class="section-header">
+                                <td colspan="4"><strong>Review Text (Column 21 - Must be last)</strong></td>
+                            </tr>
+                            <tr>
+                                <td>21</td>
+                                <td><code>free_text_box</code></td>
+                                <td>Employee review/feedback text</td>
+                                <td><code>"I'm truly happy with the recognition I've received."</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="format-notes">
+                    <p><strong>💡 Quick Tips:</strong></p>
+                    <ul>
+                        <li>Column names must match exactly (case-sensitive)</li>
+                        <li>Score columns (3-20) must be numbers <strong>1-5</strong> only</li>
+                        <li>Date format: <code>YYYY-MM-DD</code> or <code>YYYY-MM-DD HH:MM:SS</code></li>
+                        <li><code>free_text_box</code> must be the last column</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="instruction-card">
+            <h3>✅ What Happens After Upload?</h3>
+            <div class="instruction-content">
+                <ol>
+                    <li><strong>Data Validation:</strong> The system checks for required columns and validates score ranges (1-5)</li>
+                    <li><strong>Section Score Calculation:</strong> Average scores are calculated for each section (e.g., average of 3 Compensation & Benefits columns)</li>
+                    <li><strong>Sentiment Analysis:</strong> VADER sentiment analysis is performed on the <code>free_text_box</code> text</li>
+                    <li><strong>Training Data Creation:</strong> Data is added to the ML training dataset for model improvement</li>
+                    <li><strong>Dashboard Update:</strong> Your dashboard will show updated statistics and analysis results</li>
+                </ol>
+            </div>
+        </div>
+        </div> <!-- End instruction-cards-container -->
+    </div>
+
+    <!-- Upload Form -->
+    <div class="upload-form-container">
+        <div class="upload-form-header">
+            <h2>📁 Upload Your Data</h2>
+            <p class="form-subtitle">Select your CSV file below to begin processing</p>
+        </div>
+        
+        <form method="post" enctype="multipart/form-data" class="upload-form" id="uploadForm">
+            {% csrf_token %}
+            
+            <div class="form-group file-upload-group">
+                <label for="csv_file" class="form-label">
+                    <span class="label-icon">📁</span>
+                    Select CSV File
+                </label>
+                <div class="file-upload-area" id="fileUploadArea">
+                    <div class="file-upload-content">
+                        <span class="upload-icon">📄</span>
+                        <p class="upload-text">
+                            <strong>Click to browse</strong> or drag and drop your CSV file here
+                        </p>
+                        <p class="upload-hint">Supports CSV files up to 50MB</p>
+                    </div>
+                    <input type="file" id="csv_file" name="csv_file" accept=".csv" required class="file-input-hidden">
+                </div>
+                <div class="file-selected-info" id="fileSelectedInfo" style="display: none;">
+                    <span class="file-icon">✅</span>
+                    <span class="file-name" id="fileName"></span>
+                    <span class="file-size" id="fileSize"></span>
+                    <button type="button" class="remove-file-btn" onclick="clearFile()">✕</button>
+                </div>
+                <div class="file-input-info">
+                    <p class="info-text">💡 <strong>Tip:</strong> Make sure your CSV follows the required format (see instructions above)</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="description" class="form-label">
+                    <span class="label-icon">📝</span>
+                    Description (Optional)
+                </label>
+                <textarea id="description" name="description" class="form-control" rows="3" 
+                          placeholder="Describe your dataset (e.g., 'Q4 2024 Employee Survey', 'Department Feedback')"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large" id="uploadButton">
+                    <span class="btn-icon">🚀</span>
+                    <span class="button-text">Upload & Process Data</span>
+                    <span class="button-loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Uploading...
+                    </span>
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="clearForm()" id="clearButton">
+                    <span class="btn-icon">🗑️</span>
+                    Clear Form
+                </button>
+            </div>
+            
+            <div class="upload-help-text">
+                <p>✨ <strong>What happens next?</strong> Your data will be validated, processed, and analyzed. You'll see results on your dashboard!</p>
+            </div>
+            
+            <div class="upload-progress" id="uploadProgress" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <p class="progress-text">Processing your file, please wait. Do not refresh the page...</p>
+            </div>
+        </form>
+    </div>
+
+    <!-- Upload Status -->
+    {% if messages %}
+        <div class="upload-status">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    <span class="alert-icon">
+                        {% if message.tags == 'success' %}✅{% elif message.tags == 'error' %}❌{% else %}ℹ️{% endif %}
+                    </span>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Current Data Summary -->
+    <div class="data-summary">
+        <div class="summary-card">
+            <h3>📊 Your Current Data</h3>
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_responses }}</span>
+                    <span class="stat-label">Total Responses</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ sentiment_analyses }}</span>
+                    <span class="stat-label">Sentiment Analyses</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ last_upload|date:"M d, Y"|default:"Never" }}</span>
+                    <span class="stat-label">Last Upload</span>
+                </div>
+            </div>
+            {% if total_responses > 0 %}
+                <div class="summary-actions">
+                    <a href="{% url 'ml_analysis:dashboard' %}" class="btn btn-outline-secondary">ML Analysis</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+let isUploading = false;
+
+// File upload area click handler
+document.addEventListener('DOMContentLoaded', function() {
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileInput = document.getElementById('csv_file');
+    const fileSelectedInfo = document.getElementById('fileSelectedInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    
+    // Click on upload area to trigger file input
+    fileUploadArea.addEventListener('click', function(e) {
+        if (e.target !== fileInput) {
+            fileInput.click();
+        }
+    });
+    
+    // Drag and drop handlers
+    fileUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.add('drag-over');
+    });
+    
+    fileUploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('drag-over');
+    });
+    
+    fileUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    });
+    
+    // File input change handler
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+    
+    function handleFileSelect(file) {
+        // Validate file type
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            alert('Please select a CSV file');
+            fileInput.value = '';
+            return;
+        }
+        
+        // Validate file size
+        if (file.size > 50 * 1024 * 1024) {
+            alert('File size must be less than 50MB');
+            fileInput.value = '';
+            return;
+        }
+        
+        // Create a FileList-like object and assign to input
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput.files = dataTransfer.files;
+        
+        // Update UI
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        fileUploadArea.style.display = 'none';
+        fileSelectedInfo.style.display = 'flex';
+        
+        console.log('File selected:', file.name, 'Size:', formatFileSize(file.size));
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+});
+
+function clearFile() {
+    const fileInput = document.getElementById('csv_file');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileSelectedInfo = document.getElementById('fileSelectedInfo');
+    
+    fileInput.value = '';
+    fileUploadArea.style.display = 'block';
+    fileSelectedInfo.style.display = 'none';
+}
+
+function clearForm() {
+    if (isUploading) {
+        alert('Please wait for the current upload to complete before clearing the form.');
+        return;
+    }
+    if (confirm('Are you sure you want to clear the form?')) {
+        clearFile();
+        document.getElementById('description').value = '';
+        enableForm();
+    }
+}
+
+function disableForm() {
+    isUploading = true;
+    const uploadButton = document.getElementById('uploadButton');
+    const csvFileInput = document.getElementById('csv_file');
+    const descriptionInput = document.getElementById('description');
+    const clearButton = document.getElementById('clearButton');
+    const uploadProgress = document.getElementById('uploadProgress');
+    
+    uploadButton.disabled = true;
+    uploadButton.classList.add('uploading');
+    uploadButton.querySelector('.button-text').style.display = 'none';
+    uploadButton.querySelector('.button-loading').style.display = 'inline-flex';
+    csvFileInput.disabled = true;
+    descriptionInput.disabled = true;
+    clearButton.disabled = true;
+    uploadProgress.style.display = 'block';
+}
+
+function enableForm() {
+    isUploading = false;
+    const uploadButton = document.getElementById('uploadButton');
+    const csvFileInput = document.getElementById('csv_file');
+    const descriptionInput = document.getElementById('description');
+    const clearButton = document.getElementById('clearButton');
+    const uploadProgress = document.getElementById('uploadProgress');
+    
+    uploadButton.disabled = false;
+    uploadButton.classList.remove('uploading');
+    uploadButton.querySelector('.button-text').style.display = 'inline';
+    uploadButton.querySelector('.button-loading').style.display = 'none';
+    csvFileInput.disabled = false;
+    descriptionInput.disabled = false;
+    clearButton.disabled = false;
+    uploadProgress.style.display = 'none';
+}
+
+// Prevent multiple submissions
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadForm = document.getElementById('uploadForm');
+    const csvFileInput = document.getElementById('csv_file');
+    
+    uploadForm.addEventListener('submit', function(e) {
+        if (isUploading) {
+            e.preventDefault();
+            alert('Upload is already in progress. Please wait...');
+            return false;
+        }
+        
+        // Validate file is selected
+        if (!csvFileInput.files || csvFileInput.files.length === 0) {
+            alert('Please select a CSV file to upload.');
+            e.preventDefault();
+            return false;
+        }
+        
+        // Disable form immediately
+        disableForm();
+        
+        // Allow form to submit normally
+        return true;
+    });
+    
+    // File input validation is now handled in the handleFileSelect function above
+    
+    // Re-enable form if page is refreshed or user navigates back
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            enableForm();
+        }
+    });
+});
+
+// Add CSS for upload states
+const style = document.createElement('style');
+style.textContent = `
+    .btn-primary.uploading {
+        opacity: 0.7;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    .button-loading {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .button-loading .fa-spinner {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    .upload-progress {
+        margin-top: 1.5rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 10px;
+        background: #e9ecef;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3498db, #2980b9);
+        width: 0%;
+        animation: progress 2s ease-in-out infinite;
+        background-size: 200% 100%;
+        background-position: 0% 0%;
+    }
+    
+    @keyframes progress {
+        0% {
+            width: 0%;
+            background-position: 0% 0%;
+        }
+        50% {
+            width: 70%;
+            background-position: 100% 0%;
+        }
+        100% {
+            width: 100%;
+            background-position: 200% 0%;
+        }
+    }
+    
+    .progress-text {
+        text-align: center;
+        color: #555;
+        font-size: 0.95rem;
+        margin: 0;
+        font-weight: 500;
+    }
+    
+    .form-control:disabled,
+    .file-input:disabled,
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}
