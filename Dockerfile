@@ -47,7 +47,8 @@ COPY . .
 COPY --from=frontend-builder /app/frontend/dist /app/sentiment_analyzer/frontend/static/frontend/dist
 
 # Create necessary directories
-RUN mkdir -p /app/logs /app/media /app/static
+RUN mkdir -p /app/logs /app/media /app/static && \
+    chown -R appuser:appuser /app/logs /app/media /app/static
 
 # Collect static files
 RUN cd sentiment_analyzer && python manage.py collectstatic --noinput --settings=sentiment_analyzer.settings
