@@ -6,7 +6,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('frontend.urls')),
-    path('ml/', include('ml_analysis.urls')),
+    # path('ml/', include('ml_analysis.urls')),  # Legacy dashboard disabled
     path('tenants/', include('tenants.urls')),
     path('api/', include('api.urls')),
 ]
