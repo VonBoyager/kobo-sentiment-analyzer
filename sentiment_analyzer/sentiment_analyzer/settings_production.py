@@ -161,6 +161,11 @@ STATIC_URL = '/static/'
 # Use /app/static for Docker deployments, fallback to BASE_DIR for local development
 STATIC_ROOT = config('STATIC_ROOT', default='/app/static' if os.path.exists('/app') else str(BASE_DIR / 'staticfiles'))
 
+# Ensure frontend static files are found
+STATICFILES_DIRS = [
+    BASE_DIR / 'frontend/static',
+]
+
 # Media files (for file uploads)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
