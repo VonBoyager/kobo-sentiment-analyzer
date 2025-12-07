@@ -157,7 +157,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+# Use /app/static for Docker deployments, fallback to BASE_DIR for local development
+STATIC_ROOT = config('STATIC_ROOT', default='/app/static' if os.path.exists('/app') else str(BASE_DIR / 'staticfiles'))
 
 # Media files (for file uploads)
 MEDIA_URL = '/media/'
@@ -203,11 +205,11 @@ CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_WORKER_MAX_TASKS_PER_CHILD = 1000
 
 # Production overrides
-DEBUG = False
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv() if USE_DECOUPLE else list)
 
-# Database SSL disabled for local PostgreSQL
-DATABASES['default']['OPTIONS'] = {'sslmode': 'disable'}
+# Database SSL configuration
+DATABASES['default']['OPTIONS'] = {'sslmode': config('DB_SSLMODE', default='disable')}
 
 # Console-only logging
 LOGGING = {
@@ -231,16 +233,3 @@ LOGGING = {
         'level': 'INFO',
     },
 }
-
-# Static files configuration
-STATIC_ROOT = '/var/www/sentiment_analyzer/static/'
-
-# Production overrides
-DEBUG = False
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-
-# Database SSL disabled for local PostgreSQL
-DATABASES['default']['OPTIONS'] = {'sslmode': 'disable'}
-
-# Static files configuration
-STATIC_ROOT = '/var/www/sentiment_analyzer/static/'

@@ -45,7 +45,8 @@ SECURE_HSTS_SECONDS = 31536000
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
 # CORS configuration for Cloudflare
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='', cast=Csv())
+# USE_DECOUPLE is inherited from settings_production
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='', cast=Csv() if USE_DECOUPLE else list)
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = False
 
@@ -74,6 +75,33 @@ CACHE_HEADERS = {
 }
 
 # Cloudflare-specific logging
+# Ensure LOGGING dict exists before modifying it
+if 'LOGGING' not in globals() or not isinstance(LOGGING, dict):
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'simple': {
+                'format': '{levelname} {message}',
+                'style': '{',
+            },
+        },
+        'handlers': {
+            'console': {
+                'level': 'INFO',
+                'class': 'logging.StreamHandler',
+                'formatter': 'simple',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+    }
+
+# Add Cloudflare handler
+if 'handlers' not in LOGGING:
+    LOGGING['handlers'] = {}
 LOGGING['handlers']['cloudflare'] = {
     'level': 'INFO',
     'class': 'logging.handlers.HTTPHandler',
@@ -84,11 +112,24 @@ LOGGING['handlers']['cloudflare'] = {
 }
 
 # API rate limiting for Cloudflare
-REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
+# Ensure REST_FRAMEWORK dict exists before modifying it
+if 'REST_FRAMEWORK' not in globals() or not isinstance(REST_FRAMEWORK, dict):
+    REST_FRAMEWORK = {
+        'DEFAULT_PERMISSION_CLASSES': [
+            'rest_framework.permissions.IsAuthenticated',
+        ],
+        'DEFAULT_AUTHENTICATION_CLASSES': [
+            'rest_framework.authentication.SessionAuthentication',
+        ],
+    }
+
+if 'DEFAULT_THROTTLE_RATES' not in REST_FRAMEWORK:
+    REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {}
+REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'].update({
     'anon': f'{config("API_RATE_LIMIT", default=1000)}/hour',
     'user': f'{config("API_RATE_LIMIT", default=1000)}/hour',
     'cloudflare': f'{config("CLOUDFLARE_RATE_LIMIT", default=10000)}/hour',
-}
+})
 
 # Cloudflare-specific static files configuration
 STATICFILES_DIRS = [
@@ -103,7 +144,7 @@ CLOUDFLARE_TUNNEL_TOKEN = config('CLOUDFLARE_TUNNEL_TOKEN', default='')
 
 # Edge computing configuration
 EDGE_COMPUTING = config('EDGE_COMPUTING', default=False, cast=bool)
-EDGE_FUNCTIONS = config('EDGE_FUNCTIONS', default='', cast=Csv())
+EDGE_FUNCTIONS = config('EDGE_FUNCTIONS', default='', cast=Csv() if USE_DECOUPLE else list)
 
 # Cloudflare-specific email configuration
 if config('USE_CLOUDFLARE_EMAIL', default=False, cast=bool):

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   db:
@@ -38,13 +36,13 @@ services:
     command: >
       sh -c "cd sentiment_analyzer && python manage.py migrate --settings=sentiment_analyzer.settings_production &&
              python manage.py collectstatic --noinput --settings=sentiment_analyzer.settings_production &&
-             gunicorn --bind 0.0.0.0:8000 --workers 1 --timeout 120 sentiment_analyzer.wsgi:application"
+             gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 sentiment_analyzer.wsgi:application"
     environment:
       - DEBUG=False
       - DB_ENGINE=django.db.backends.postgresql
       - DB_NAME=sentiment_analyzer
       - DB_USER=postgres
-      - DB_PASSWORD=${DB_PASSWORD:-hellow1432}
+      - DB_PASSWORD=${DB_PASSWORD}
       - DB_HOST=db
       - DB_PORT=5432
       - REDIS_URL=redis://redis:6379/0
@@ -95,7 +93,7 @@ services:
       - DB_ENGINE=django.db.backends.postgresql
       - DB_NAME=sentiment_analyzer
       - DB_USER=postgres
-      - DB_PASSWORD=${DB_PASSWORD:-hellow1432}
+      - DB_PASSWORD=${DB_PASSWORD}
       - DB_HOST=db
       - DB_PORT=5432
       - REDIS_URL=redis://redis:6379/0
@@ -118,7 +116,7 @@ services:
       - DB_ENGINE=django.db.backends.postgresql
       - DB_NAME=sentiment_analyzer
       - DB_USER=postgres
-      - DB_PASSWORD=${DB_PASSWORD:-hellow1432}
+      - DB_PASSWORD=${DB_PASSWORD}
       - DB_HOST=db
       - DB_PORT=5432
       - REDIS_URL=redis://redis:6379/0
