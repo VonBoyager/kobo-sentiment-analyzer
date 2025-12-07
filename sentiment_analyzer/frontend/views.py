@@ -27,7 +27,21 @@ from ml_analysis.models import SentimentAnalysis, TopicAnalysis, SectionTopicCor
 from ml_analysis.services import MLPipeline
 
 def home(request):
-    """Home page view - redirect to login if not authenticated"""
+    """Serve React frontend application"""
+    import os
+    from django.conf import settings
+    from django.http import HttpResponse
+    
+    # Path to React app's index.html (built version)
+    react_index_path = os.path.join(settings.BASE_DIR, 'frontend', 'static', 'frontend', 'dist', 'index.html')
+    
+    # If React app exists, serve it
+    if os.path.exists(react_index_path):
+        with open(react_index_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return HttpResponse(content, content_type='text/html')
+    
+    # Fallback to old Django views
     if request.user.is_authenticated:
         return redirect('frontend:dashboard')
     return redirect('frontend:login')
