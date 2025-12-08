@@ -23,7 +23,8 @@ from .serializers import (
     MLModelSerializer, TrainingDataSerializer, UserFeedbackSerializer,
     TenantSerializer, TenantFileSerializer, TenantModelSerializer, TenantUserSerializer,
     APITokenSerializer, APIRequestSerializer, APILogSerializer,
-    APIConfigurationSerializer, APIVersionSerializer, APIStatsSerializer, MLStatsSerializer
+    APIConfigurationSerializer, APIVersionSerializer, APIStatsSerializer, MLStatsSerializer,
+    QuestionnaireSectionSerializer, QuestionnaireQuestionSerializer
 )
 from frontend.models import QuestionnaireResponse, QuestionnaireSection, QuestionnaireQuestion, SectionScore
 from ml_analysis.models import SentimentAnalysis, TopicAnalysis, SectionTopicCorrelation, MLModel, TrainingData, UserFeedback
@@ -39,6 +40,22 @@ logger = logging.getLogger(__name__)
 
 class CustomAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
+        # Case-insensitive username handling
+        if 'username' in request.data:
+            username = request.data['username']
+            # Find user case-insensitively
+            user = User.objects.filter(username__iexact=username).first()
+            if user:
+                # Update request data with correct case username
+                # We need to make a mutable copy if it's QueryDict
+                if hasattr(request.data, '_mutable'):
+                    request.data._mutable = True
+                    request.data['username'] = user.username
+                    request.data._mutable = False
+                else:
+                    # For JSON data (dict)
+                    request.data['username'] = user.username
+        
         serializer = self.serializer_class(data=request.data,
                                          context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -105,14 +122,104 @@ class APITokenViewSet(viewsets.ModelViewSet):
         
         return Response({'message': 'Token deactivated'})
 
-class QuestionnaireResponseViewSet(viewsets.ReadOnlyModelViewSet):
+class QuestionnaireSectionViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet for questionnaire sections"""
+    queryset = QuestionnaireSection.objects.all()
+    serializer_class = QuestionnaireSectionSerializer
+    permission_classes = [permissions.AllowAny]
+
+class QuestionnaireQuestionViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet for questionnaire questions"""
+    queryset = QuestionnaireQuestion.objects.all()
+    serializer_class = QuestionnaireQuestionSerializer
+    permission_classes = [permissions.AllowAny]
+
+class QuestionnaireResponseViewSet(viewsets.ModelViewSet):
     """ViewSet for questionnaire responses"""
     queryset = QuestionnaireResponse.objects.all()
     serializer_class = QuestionnaireResponseSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        """Allow anonymous users to create responses, but restrict listing"""
+        if self.action == 'create':
+            permission_classes = [permissions.AllowAny]
+        else:
+            permission_classes = [permissions.IsAuthenticated]
+        return [permission() for permission in permission_classes]
     
     def get_queryset(self):
+        # Staff can see all, regular users see their own
+        if self.request.user.is_anonymous:
+            return QuestionnaireResponse.objects.none()
+        if self.request.user.is_staff:
+            return QuestionnaireResponse.objects.all()
         return QuestionnaireResponse.objects.filter(user=self.request.user)
+    
+    def create(self, request, *args, **kwargs):
+        """Handle questionnaire submission with answers"""
+        try:
+            from frontend.models import QuestionResponse, QuestionnaireQuestion, SectionScore
+            from django.db import transaction
+
+            # Extract data
+            review_text = request.data.get('review', '')
+            answers = request.data.get('answers', []) # List of {question_id, score}
+
+            if not answers:
+                return Response({'error': 'No answers provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+            with transaction.atomic():
+                # 1. Create Response
+                user = request.user if request.user.is_authenticated else None
+                response = QuestionnaireResponse.objects.create(
+                    user=user,
+                    review=review_text,
+                    is_complete=True # Assuming submitted means complete
+                )
+
+                # 2. Create Question Responses and Calculate Section Scores
+                section_scores = defaultdict(list)
+                
+                for answer in answers:
+                    q_id = answer.get('question_id')
+                    score = answer.get('score')
+                    
+                    if q_id and score:
+                        question = QuestionnaireQuestion.objects.get(id=q_id)
+                        QuestionResponse.objects.create(
+                            response=response,
+                            question=question,
+                            score=score
+                        )
+                        section_scores[question.section].append(int(score))
+                
+                # 3. Save Section Scores
+                for section, scores in section_scores.items():
+                    avg_score = sum(scores) / len(scores)
+                    SectionScore.objects.create(
+                        response=response,
+                        section=section,
+                        average_score=avg_score,
+                        total_questions=len(scores)
+                    )
+                
+                # 4. Trigger ML Pipeline (optional/async)
+                try:
+                    # Run synchronously for now to give immediate feedback or use Celery
+                    # For now, let's just trigger it if available
+                    pass
+                except Exception as e:
+                    logger.error(f"Error triggering ML: {e}")
+
+                serializer = self.get_serializer(response)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logger.error(f"Error creating response: {e}", exc_info=True)
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
     
     @action(detail=True, methods=['get'])
     def complete_analysis(self, request, pk=None):

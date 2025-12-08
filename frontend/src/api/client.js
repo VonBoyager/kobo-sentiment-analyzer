@@ -117,11 +117,11 @@ export const apiEndpoints = {
 // API methods
 export const api = {
   // Generic CRUD operations
-  get: (endpoint, params = {}) => apiClient.get(endpoint, { params }),
-  post: (endpoint, data = {}) => apiClient.post(endpoint, data),
-  put: (endpoint, data = {}) => apiClient.put(endpoint, data),
-  patch: (endpoint, data = {}) => apiClient.patch(endpoint, data),
-  delete: (endpoint) => apiClient.delete(endpoint),
+  get: (endpoint, config = {}) => apiClient.get(endpoint, config),
+  post: (endpoint, data = {}, config = {}) => apiClient.post(endpoint, data, config),
+  put: (endpoint, data = {}, config = {}) => apiClient.put(endpoint, data, config),
+  patch: (endpoint, data = {}, config = {}) => apiClient.patch(endpoint, data, config),
+  delete: (endpoint, config = {}) => apiClient.delete(endpoint, config),
   
   // Specific API calls
   auth: {

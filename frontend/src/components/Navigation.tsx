@@ -86,27 +86,38 @@ export function Navigation() {
 
           {/* Desktop User Menu */}
           <div className="hidden lg:flex items-center gap-4">
-            <div className="flex items-center gap-3 px-4 py-2 bg-gray-700 rounded-xl">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-white">{user?.username}</span>
-                {user?.is_staff && (
-                  <span className="px-2 py-0.5 bg-blue-900 text-blue-300 text-xs font-medium rounded-md">
-                    Admin
-                  </span>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={logout}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700 rounded-xl transition-colors"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </button>
+            {user ? (
+              <>
+                <div className="flex items-center gap-3 px-4 py-2 bg-gray-700 rounded-xl">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-white">{user.username}</span>
+                    {user.is_staff && (
+                      <span className="px-2 py-0.5 bg-blue-900 text-blue-300 text-xs font-medium rounded-md">
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={logout}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700 rounded-xl transition-colors"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-900/20"
+              >
+                Login
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -153,11 +164,22 @@ export function Navigation() {
               {isAdmin && (
                 <>
                   <Link
+                    to="/admin/questionnaires"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                      isActive('/admin/questionnaires')
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-200 hover:bg-gray-700'
+                    }`}
+                  >
+                    Questionnaires
+                  </Link>
+                  <Link
                     to="/upload"
                     onClick={() => setMobileMenuOpen(false)}
                     className={`block px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-                      isActive('/upload') 
-                        ? 'bg-blue-600 text-white' 
+                      isActive('/upload')
+                        ? 'bg-blue-600 text-white'
                         : 'text-gray-200 hover:bg-gray-700'
                     }`}
                   >
@@ -180,29 +202,41 @@ export function Navigation() {
 
             {/* Mobile User Info */}
             <div className="mt-4 pt-4 border-t border-gray-700">
-              <div className="flex items-center gap-3 px-4 py-2 mb-2">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                  <User className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-white">{user?.username}</div>
-                  {user?.is_staff && (
-                    <span className="inline-block mt-1 px-2 py-0.5 bg-blue-900 text-blue-300 text-xs font-medium rounded-md">
-                      Admin
-                    </span>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  logout();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-200 hover:bg-gray-700 rounded-xl transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </button>
+              {user ? (
+                <>
+                  <div className="flex items-center gap-3 px-4 py-2 mb-2">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-white">{user.username}</div>
+                      {user.is_staff && (
+                        <span className="inline-block mt-1 px-2 py-0.5 bg-blue-900 text-blue-300 text-xs font-medium rounded-md">
+                          Admin
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-200 hover:bg-gray-700 rounded-xl transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Logout</span>
+                  </button>
+                </>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full text-center px-4 py-3 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Login
+                </Link>
+              )}
             </div>
           </div>
         )}

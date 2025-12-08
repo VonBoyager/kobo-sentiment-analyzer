@@ -5,6 +5,8 @@ from . import views
 # Create a router and register our viewsets with it
 router = DefaultRouter()
 router.register(r'tokens', views.APITokenViewSet, basename='apitoken')
+router.register(r'questionnaire-sections', views.QuestionnaireSectionViewSet, basename='questionnairesection')
+router.register(r'questionnaire-questions', views.QuestionnaireQuestionViewSet, basename='questionnairequestion')
 router.register(r'questionnaire-responses', views.QuestionnaireResponseViewSet, basename='questionnaireresponse')
 router.register(r'sentiment-analysis', views.SentimentAnalysisViewSet, basename='sentimentanalysis')
 router.register(r'topic-analysis', views.TopicAnalysisViewSet, basename='topicanalysis')

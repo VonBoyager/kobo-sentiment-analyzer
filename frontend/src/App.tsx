@@ -17,10 +17,19 @@ import './styles/main.css';
 function AppRoutes() {
   const { user } = useAuth();
 
+  // Public routes (accessible without login)
+  const publicRoutes = (
+    <>
+      <Route path="/login" element={!user ? <Login /> : <Navigate to="/" replace />} />
+      <Route path="/questionnaire" element={<Consent />} />
+      <Route path="/questionnaire/start" element={<Questionnaire />} />
+    </>
+  );
+
   if (!user) {
     return (
       <Routes>
-        <Route path="/login" element={<Login />} />
+        {publicRoutes}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
@@ -31,26 +40,11 @@ function AppRoutes() {
       <Navigation />
       <main className="pt-16">
         <Routes>
+          {publicRoutes}
           <Route
             path="/"
             element={
               user.is_staff ? <Dashboard /> : <EmployeeDashboard />
-            }
-          />
-          <Route
-            path="/questionnaire"
-            element={
-              <RoleGuard allowedRoles={['employee', 'admin']}>
-                <Consent />
-              </RoleGuard>
-            }
-          />
-          <Route
-            path="/questionnaire/start"
-            element={
-              <RoleGuard allowedRoles={['employee', 'admin']}>
-                <Questionnaire />
-              </RoleGuard>
             }
           />
           <Route
