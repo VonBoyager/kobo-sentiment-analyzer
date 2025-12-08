@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { Upload as UploadIcon, FileSpreadsheet, CheckCircle2, XCircle, AlertCircle, Sparkles, Database } from 'lucide-react';
+import { api } from '../api/client';
 
 const requiredColumns = [
   { name: 'uid', description: 'Unique identifier for the response.' },
@@ -91,20 +92,16 @@ export function Upload() {
     
     try {
         addLog('Uploading file to server...');
-        const uploadResponse = await fetch('/api/upload/', {
-            method: 'POST',
-            body: formData,
+        const response = await api.post('/upload/', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
         });
-
-        if (!uploadResponse.ok) {
-            const errorData = await uploadResponse.json().catch(() => ({ error: 'Upload failed' }));
-            throw new Error(errorData.error || 'Upload failed');
-        }
 
         addLog('Upload complete. Processing data...');
         setStatus('processing');
         
-        const result = await uploadResponse.json();
+        const result = response.data;
         addLog(result.message || 'Processing complete');
         addLog('Data has been loaded into the system.');
         addLog('You can now view results in the Dashboard and Results pages.');
