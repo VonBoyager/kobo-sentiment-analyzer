@@ -2,6 +2,7 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -664,6 +665,7 @@ class TestModelsView(APIView):
 class CSVUploadView(APIView):
     """Upload CSV file"""
     permission_classes = [permissions.AllowAny]  # Allow anonymous for development
+    parser_classes = (MultiPartParser, FormParser)
     
     def post(self, request):
         try:
