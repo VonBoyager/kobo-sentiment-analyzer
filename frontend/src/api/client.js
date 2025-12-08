@@ -4,7 +4,7 @@ import axios from 'axios'
 // Create axios instance with default configuration
 const apiClient = axios.create({
   baseURL: '/api',
-  timeout: 10000,
+  timeout: 60000, // Increased to 60s for large uploads/ML processing
   headers: {
     'Content-Type': 'application/json',
   }
