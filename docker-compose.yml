@@ -37,7 +37,7 @@ services:
       sh -c "cd sentiment_analyzer && python manage.py migrate --settings=sentiment_analyzer.settings_production &&
              python manage.py collectstatic --noinput --settings=sentiment_analyzer.settings_production &&
              cp ../employee_feedback_dataset.csv /app/static/frontend/dist/assets/ || true &&
-             chmod -R 755 /app/static &&
+             chmod -R 755 /app/static || true &&
              gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 300 sentiment_analyzer.wsgi:application"
     environment:
       - DEBUG=False
