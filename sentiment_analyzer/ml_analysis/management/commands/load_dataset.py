@@ -151,13 +151,15 @@ class Command(BaseCommand):
                                 if review_date_str:
                                     # Try common date formats
                                     date_formats = [
+                                        '%d/%m/%Y',  # Priority: DD/MM/YYYY (International)
+                                        '%d-%m-%Y',
                                         '%Y-%m-%d',
                                         '%Y-%m-%d %H:%M:%S',
                                         '%Y/%m/%d',
-                                        '%m/%d/%Y',
-                                        '%d/%m/%Y',
-                                        '%d-%m-%Y',
+                                        '%m/%d/%Y',  # US Format (fallback)
                                         '%m-%d-%Y',
+                                        '%d/%m/%y',  # 2-digit year
+                                        '%d-%m-%y',
                                         '%Y-%m-%dT%H:%M:%S',
                                         '%Y-%m-%dT%H:%M:%S.%f',
                                         '%B %d, %Y',  # e.g. January 1, 2024

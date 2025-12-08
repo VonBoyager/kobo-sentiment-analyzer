@@ -8,9 +8,34 @@ export function AdminQuestionnaires() {
   // In a real app, this would come from the backend
   const questionnaireLink = `${window.location.origin}/questionnaire`;
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(questionnaireLink);
-    toast.success('Link copied to clipboard');
+  const copyLink = async () => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(questionnaireLink);
+        toast.success('Link copied to clipboard');
+      } else {
+        // Fallback for non-secure context (HTTP)
+        const textArea = document.createElement("textarea");
+        textArea.value = questionnaireLink;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          toast.success('Link copied to clipboard');
+        } catch (err) {
+          console.error('Fallback: Oops, unable to copy', err);
+          toast.error('Failed to copy link');
+        }
+        document.body.removeChild(textArea);
+      }
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+      toast.error('Failed to copy link');
+    }
   };
 
   const toggleLock = () => {
