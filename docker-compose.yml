@@ -96,7 +96,7 @@ services:
   # Celery Worker (for background tasks)
   celery:
     build: .
-    command: celery -A sentiment_analyzer.sentiment_analyzer.celery worker -l info
+    command: sh -c "cd sentiment_analyzer && celery -A sentiment_analyzer.celery worker -l info"
     environment:
       - DEBUG=False
       - DB_ENGINE=django.db.backends.postgresql
@@ -124,7 +124,7 @@ services:
   # Celery Beat (for scheduled tasks)
   celery-beat:
     build: .
-    command: celery -A sentiment_analyzer.sentiment_analyzer.celery beat -l info
+    command: sh -c "cd sentiment_analyzer && celery -A sentiment_analyzer.celery beat -l info"
     environment:
       - DEBUG=False
       - DB_ENGINE=django.db.backends.postgresql
