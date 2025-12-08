@@ -92,8 +92,12 @@ export function Upload() {
     
     try {
         addLog('Uploading file to server...');
-        // Don't set Content-Type manually for FormData - axios/browser does it with boundary
-        const response = await api.post('/upload/', formData);
+        // Override default JSON header to let browser set multipart/form-data with boundary
+        const response = await api.post('/upload/', formData, {
+            headers: {
+                'Content-Type': undefined
+            }
+        });
 
         addLog('Upload complete. Processing data...');
         setStatus('processing');
