@@ -40,7 +40,7 @@ function AppRoutes() {
           <Route
             path="/questionnaire"
             element={
-              <RoleGuard allowedRoles={['employee']}>
+              <RoleGuard allowedRoles={['employee', 'admin']}>
                 <Consent />
               </RoleGuard>
             }
@@ -48,7 +48,7 @@ function AppRoutes() {
           <Route
             path="/questionnaire/start"
             element={
-              <RoleGuard allowedRoles={['employee']}>
+              <RoleGuard allowedRoles={['employee', 'admin']}>
                 <Questionnaire />
               </RoleGuard>
             }
