@@ -204,11 +204,26 @@ class QuestionnaireResponseViewSet(viewsets.ModelViewSet):
                         total_questions=len(scores)
                     )
                 
-                # 4. Trigger ML Pipeline (optional/async)
+                # 4. Trigger ML Pipeline
                 try:
-                    # Run synchronously for now to give immediate feedback or use Celery
-                    # For now, let's just trigger it if available
-                    pass
+                    if review_text and len(review_text.strip()) > 0:
+                        from ml_analysis.services import SentimentAnalyzer, MLPipeline
+                        
+                        # Run Sentiment Analysis
+                        analyzer = SentimentAnalyzer()
+                        result = analyzer.analyze_text(review_text)
+                        
+                        # Save Sentiment Analysis
+                        SentimentAnalysis.objects.create(
+                            response=response,
+                            compound_score=result['compound'],
+                            positive_score=result['pos'],
+                            negative_score=result['neg'],
+                            neutral_score=result['neu'],
+                            sentiment_label=result['sentiment'],
+                            confidence=result['confidence'],
+                            text_length=len(review_text)
+                        )
                 except Exception as e:
                     logger.error(f"Error triggering ML: {e}")
 
