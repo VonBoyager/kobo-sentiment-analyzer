@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { ClipboardList, Sparkles, TrendingUp, TrendingDown, LogIn, ArrowLeft } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, Tooltip } from 'recharts';
 import { useEffect, useState } from 'react';
+import { STATIC_DASHBOARD_DATA } from '../data/staticDemoData';
 
 interface SentimentBreakdown {
   positive: number;
@@ -44,22 +45,9 @@ export function DemoDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/api/ml/public-stats/');
-        if (!response.ok) {
-          throw new Error('Failed to fetch demo data');
-        }
-        const result = await response.json();
-        setData(result);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    // Use static data for demo
+    setData(STATIC_DASHBOARD_DATA);
+    setLoading(false);
   }, []);
 
   if (loading) {
@@ -94,13 +82,7 @@ export function DemoDashboard() {
     { name: 'Negative', value: totalSentiments > 0 ? ((sentiment_breakdown.negative / totalSentiments) * 100) : 0, color: '#ef4444' }
   ];
 
-  // Mock trend data for demo since backend doesn't provide it yet
-  const trendData = [
-      { month: '2024-01', avg_score: 3.2 },
-      { month: '2024-02', avg_score: 3.4 },
-      { month: '2024-03', avg_score: 3.1 },
-      { month: '2024-04', avg_score: 3.5 },
-  ];
+  const trendData = data.sentiment_trend;
 
   return (
     <div className="min-h-screen bg-gray-900">

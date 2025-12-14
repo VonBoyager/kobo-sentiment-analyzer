@@ -2,6 +2,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import { Sparkles, MessageSquare, Award, ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { STATIC_RESULTS_DATA } from '../data/staticDemoData';
 
 interface ResultsData {
   count: number;
@@ -21,22 +22,9 @@ export function DemoResults() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/api/ml/public-results/');
-        if (!response.ok) {
-          throw new Error('Failed to fetch demo results data');
-        }
-        const result = await response.json();
-        setData(result);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    // Use static data for demo
+    setData(STATIC_RESULTS_DATA);
+    setLoading(false);
   }, []);
 
   if (loading) {
