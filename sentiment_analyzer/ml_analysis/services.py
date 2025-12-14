@@ -5,6 +5,7 @@ import os
 from typing import Dict, List, Tuple, Optional
 from django.conf import settings
 from django.db import transaction
+from django.core.cache import cache
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import LabelEncoder
@@ -1423,8 +1424,22 @@ class MLPipeline:
         """Train and save all models"""
         results = {}
         
+        # Update progress: 10%
+        cache.set('training_status', {
+            'status': 'processing',
+            'progress': 10,
+            'message': 'Preparing training data...'
+        }, 300)
+        
         # Prepare training data (needed for both correlation and topic models)
         texts, target_ratings = self.correlation_analyzer.prepare_training_data()
+        
+        # Update progress: 20%
+        cache.set('training_status', {
+            'status': 'processing',
+            'progress': 20,
+            'message': 'Training Topic Models (BERTopic)...'
+        }, 300)
         
         # Train topic model (BERTopic) on all training texts
         try:
@@ -1436,6 +1451,13 @@ class MLPipeline:
         except Exception as e:
             logger.error(f"Topic model training failed: {e}")
             results['topic'] = {'error': str(e)}
+        
+        # Update progress: 50%
+        cache.set('training_status', {
+            'status': 'processing',
+            'progress': 50,
+            'message': 'Training Correlation Models...'
+        }, 300)
         
         # Train correlation model
         try:
@@ -1460,6 +1482,13 @@ class MLPipeline:
             logger.error(f"Correlation training failed: {e}", exc_info=True)
             results['correlation'] = {'error': str(e)}
         
+        # Update progress: 75%
+        cache.set('training_status', {
+            'status': 'processing',
+            'progress': 75,
+            'message': 'Calculating Feature Importance...'
+        }, 300)
+
         # Train section feature importance models (NEW)
         try:
             importance_result = self.train_section_feature_importance()
@@ -1471,9 +1500,23 @@ class MLPipeline:
             logger.error(f"Section feature importance training failed: {e}")
             results['section_importance'] = {'error': str(e)}
         
+        # Update progress: 90%
+        cache.set('training_status', {
+            'status': 'processing',
+            'progress': 90,
+            'message': 'Saving Models to Database...'
+        }, 300)
+        
         # Save all models
         save_results = self.save_all_models()
         results['model_saves'] = save_results
+        
+        # Update progress: 100%
+        cache.set('training_status', {
+            'status': 'completed',
+            'progress': 100,
+            'message': 'Training Completed Successfully!'
+        }, 300)
         
         return results
     

@@ -30,6 +30,7 @@ urlpatterns = [
     path('ml/dashboard-stats/', views.DashboardStatsView.as_view(), name='dashboard-stats'),
     path('ml/results-data/', views.ResultsDataView.as_view(), name='results-data'),
     path('ml/test-models/', views.TestModelsView.as_view(), name='test-models'),
+    path('ml/training-status/', views.TrainingStatusView.as_view(), name='training-status'),
     path('upload/', views.CSVUploadView.as_view(), name='csv-upload'),
     
     # Utility endpoints

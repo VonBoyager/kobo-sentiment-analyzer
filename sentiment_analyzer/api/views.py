@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 from django.db.models import Count, Avg, Q, Min, Max, Value
 from django.db import models
 from django.utils import timezone
+from django.core.cache import cache
 from datetime import timedelta
 from collections import defaultdict
 import hashlib
@@ -751,6 +752,13 @@ class TestModelsView(APIView):
     def post(self, request):
         import threading
         
+        # Reset progress
+        cache.set('training_status', {
+            'status': 'starting',
+            'progress': 0,
+            'message': 'Initializing training process...'
+        }, 300)
+        
         def train_models_async():
             """Train models in background thread"""
             try:
@@ -759,6 +767,11 @@ class TestModelsView(APIView):
                 logger.info(f"Model training completed: {results}")
             except Exception as e:
                 logger.error(f"Error in background model training: {e}", exc_info=True)
+                cache.set('training_status', {
+                    'status': 'error',
+                    'progress': 0,
+                    'message': f'Error: {str(e)}'
+                }, 300)
         
         # Start training in background thread
         thread = threading.Thread(target=train_models_async, daemon=True)
@@ -766,8 +779,20 @@ class TestModelsView(APIView):
         
         return Response({
             'status': 'success',
-            'message': 'Models are being trained in the background. You can continue using the application.',
+            'message': 'Models are being trained in the background.',
         })
+
+class TrainingStatusView(APIView):
+    """Check status of background training"""
+    permission_classes = [permissions.AllowAny]
+    
+    def get(self, request):
+        status = cache.get('training_status', {
+            'status': 'idle',
+            'progress': 0,
+            'message': 'No training in progress'
+        })
+        return Response(status)
 
 class CSVUploadView(APIView):
     """Upload CSV file"""

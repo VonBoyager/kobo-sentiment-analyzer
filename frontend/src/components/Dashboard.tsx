@@ -65,82 +65,65 @@ export function Dashboard() {
     fetchData();
   }, []);
 
+  const [showTrainingModal, setShowTrainingModal] = useState(false);
+  const [trainingPercent, setTrainingPercent] = useState(0);
+
   const handleTestModels = async () => {
-    if (trainingModels) return; // Prevent multiple simultaneous requests
+    if (trainingModels) return;
     
     setTrainingModels(true);
-    setTrainingProgress('Initializing model training...');
-    
-    const toastId = toast.loading('Starting model training...', {
-      description: 'This may take a few minutes. Please wait.',
-    });
+    setShowTrainingModal(true);
+    setTrainingPercent(0);
+    setTrainingProgress('Initializing...');
     
     try {
-      // Show progress updates
-      const progressInterval = setInterval(() => {
-        setTrainingProgress(prev => {
-          if (prev.includes('Training sentiment')) return 'Training correlation models...';
-          if (prev.includes('Training correlation')) return 'Analyzing topics...';
-          if (prev.includes('Analyzing topics')) return 'Calculating feature importance...';
-          if (prev.includes('Calculating feature')) return 'Saving models...';
-          return 'Training models...';
-        });
-      }, 3000);
-      
-      toast.loading('Starting model training...', {
-        id: toastId,
-        description: 'Training will run in the background. You can continue using the application.',
-      });
-      
+      // 1. Start the training
       const response = await fetch('/api/ml/test-models/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
-      
-      clearInterval(progressInterval);
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to start model training' }));
-        throw new Error(errorData.error || 'Failed to start model training');
+        throw new Error('Failed to start model training');
       }
       
-      const result = await response.json();
-      
-      // Update progress
-      setTrainingProgress('Training started in background');
-      
-      // Show success message - training is now async
-      toast.success('Model Training Started!', {
-        id: toastId,
-        description: result.message || 'Models are training in the background. You can continue using the application. Results will be available when training completes.',
-        duration: 5000,
-      });
-      
-      // Don't block - let user continue using the app
-      // Training happens in background thread on server
-      setTrainingModels(false);
-      setTrainingProgress('');
-      
-      // Optionally refresh data after a longer delay to check for results
-      setTimeout(() => {
-        // Silently refresh dashboard data
-        window.location.reload();
-      }, 30000); // Check after 30 seconds
+      // 2. Poll for status
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await fetch('/api/ml/training-status/');
+          const statusData = await statusRes.json();
+          
+          setTrainingPercent(statusData.progress || 0);
+          setTrainingProgress(statusData.message || 'Processing...');
+          
+          if (statusData.status === 'completed') {
+            clearInterval(pollInterval);
+            setTrainingPercent(100);
+            setTrainingProgress('Complete!');
+            
+            toast.success('Model Training Completed!', {
+              description: 'Dashboard insights have been updated.',
+            });
+            
+            // Wait a moment then reload
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          } else if (statusData.status === 'error') {
+            clearInterval(pollInterval);
+            throw new Error(statusData.message || 'Training failed');
+          }
+        } catch (err) {
+          // If polling fails, don't crash, just wait
+          console.error("Polling error:", err);
+        }
+      }, 2000); // Poll every 2 seconds
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setTrainingProgress('Training failed');
-      
-      toast.error('Model Training Failed', {
-        id: toastId,
-        description: errorMessage,
-        duration: 5000,
-      });
-    } finally {
+      toast.error('Model Training Failed', { description: errorMessage });
       setTrainingModels(false);
-      setTrainingProgress('');
+      setShowTrainingModal(false);
     }
   };
 
@@ -448,6 +431,42 @@ export function Dashboard() {
         </div>
 
       </div>
+
+      {/* Training Progress Modal */}
+      {showTrainingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-700 shadow-2xl relative overflow-hidden">
+            {/* Background Glow */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
+            
+            <div className="relative z-10 flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-blue-900/30 rounded-2xl flex items-center justify-center mb-6">
+                <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+              </div>
+              
+              <h3 className="text-xl font-bold text-white mb-2">Training AI Models</h3>
+              <p className="text-gray-400 text-sm mb-8">
+                Please wait while we analyze the data and generate insights. This process may take a few minutes.
+              </p>
+              
+              {/* Progress Bar */}
+              <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden mb-3">
+                <div
+                  className="h-full bg-blue-500 transition-all duration-500 ease-out rounded-full relative"
+                  style={{ width: `${trainingPercent}%` }}
+                >
+                  <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]"></div>
+                </div>
+              </div>
+              
+              <div className="flex justify-between w-full text-xs">
+                <span className="text-blue-400 font-medium">{trainingProgress}</span>
+                <span className="text-gray-500">{trainingPercent}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
