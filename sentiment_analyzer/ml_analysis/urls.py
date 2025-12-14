@@ -12,4 +12,6 @@ urlpatterns = [
     path('upload-training/', views.training_data_upload, name='upload_training'),
     path('retrain/', views.retrain_models, name='retrain_models'),
     path('train-models/', views.TrainModelsView.as_view(), name='train_models'),
+    path('public-stats/', views.PublicDashboardStatsView.as_view(), name='public_stats'),
+    path('public-results/', views.PublicResultsView.as_view(), name='public_results'),
 ]

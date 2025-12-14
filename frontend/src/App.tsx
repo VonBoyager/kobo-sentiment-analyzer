@@ -4,6 +4,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import { Login } from './components/Login';
 import { Navigation } from './components/Navigation';
 import { Dashboard } from './components/Dashboard';
+import { DemoDashboard } from './components/DemoDashboard';
+import { DemoResults } from './components/DemoResults';
 import { EmployeeDashboard } from './components/EmployeeDashboard';
 import { Questionnaire } from './components/Questionnaire';
 import { Consent } from './components/Consent';
@@ -21,6 +23,8 @@ function AppRoutes() {
   const publicRoutes = (
     <>
       <Route path="/login" element={!user ? <Login /> : <Navigate to="/" replace />} />
+      <Route path="/demo" element={<DemoDashboard />} />
+      <Route path="/demo/results" element={<DemoResults />} />
       <Route path="/questionnaire" element={<Consent />} />
       <Route path="/questionnaire/start" element={<Questionnaire />} />
     </>

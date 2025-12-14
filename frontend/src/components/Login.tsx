@@ -110,6 +110,17 @@ export function Login() {
               )}
             </button>
           </form>
+
+          <div className="mt-6 pt-6 border-t border-gray-700">
+            <button
+              type="button"
+              onClick={() => navigate('/demo')}
+              className="w-full py-3.5 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 group"
+            >
+              <Sparkles className="w-5 h-5 text-blue-400 group-hover:text-blue-300" />
+              View Live Demo
+            </button>
+          </div>
         </div>
 
         {/* Footer */}

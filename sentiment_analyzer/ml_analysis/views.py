@@ -290,3 +290,147 @@ def retrain_models(request):
     except Exception as e:
         logger.error(f"Model retraining failed: {e}")
         return JsonResponse({'error': 'Model retraining failed'}, status=500)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class PublicDashboardStatsView(View):
+    """Public view for demo dashboard"""
+    
+    def get(self, request):
+        try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            
+            # Get demo user
+            try:
+                demo_user = User.objects.get(username='demo')
+            except User.DoesNotExist:
+                return JsonResponse({'error': 'Demo user not configured'}, status=404)
+            
+            # Get user's latest response
+            latest_response = QuestionnaireResponse.objects.filter(
+                user=demo_user,
+                is_complete=True
+            ).order_by('-submitted_at').first()
+            
+            # Get comprehensive data for the user
+            similar_usernames = [demo_user.username.lower(), demo_user.username.upper(),
+                               demo_user.username.capitalize()]
+            
+            # Use all similar usernames for the main counts
+            total_responses = QuestionnaireResponse.objects.filter(
+                user__username__in=similar_usernames,
+                is_complete=True
+            ).count()
+            
+            sentiment_analyses = SentimentAnalysis.objects.filter(
+                response__user__username__in=similar_usernames
+            ).count()
+            
+            topic_analyses = TopicAnalysis.objects.filter(
+                response__user__username__in=similar_usernames
+            ).count()
+            
+            correlations = SectionTopicCorrelation.objects.count()
+            
+            # Get sentiment breakdown
+            from django.db.models import Count
+            sentiment_breakdown = SentimentAnalysis.objects.filter(
+                response__user__username__in=similar_usernames
+            ).values('sentiment_label').annotate(count=Count('id'))
+            sentiment_dict = {item['sentiment_label']: item['count'] for item in sentiment_breakdown}
+            
+            # Get average confidence
+            avg_confidence = SentimentAnalysis.objects.filter(
+                response__user__username__in=similar_usernames
+            ).aggregate(
+                avg_conf=models.Avg('confidence')
+            )['avg_conf'] or 0
+            
+            # Get correlation insights
+            positive_correlations = SectionTopicCorrelation.objects.filter(
+                correlation_score__gt=0.5
+            ).order_by('-correlation_score')[:5]
+            
+            negative_correlations = SectionTopicCorrelation.objects.filter(
+                correlation_score__lt=-0.3
+            ).order_by('correlation_score')[:5]
+            
+            data = {
+                'total_responses': total_responses,
+                'sentiment_analyses': sentiment_analyses,
+                'total_topic_analyses': topic_analyses,
+                'correlations': correlations,
+                'sentiment_breakdown': sentiment_dict,
+                'avg_confidence': avg_confidence * 100,
+                'positive_correlations': list(positive_correlations.values(
+                    'section_name', 'topic_name', 'correlation_score', 'sample_size'
+                )),
+                'negative_correlations': list(negative_correlations.values(
+                    'section_name', 'topic_name', 'correlation_score', 'sample_size'
+                ))
+            }
+            
+            return JsonResponse(data)
+            
+        except Exception as e:
+            logger.error(f"Public dashboard stats failed: {e}")
+            return JsonResponse({'error': str(e)}, status=500)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class PublicResultsView(View):
+    """Public view for demo results"""
+    
+    def get(self, request):
+        try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            
+            # Get demo user
+            try:
+                demo_user = User.objects.get(username='demo')
+            except User.DoesNotExist:
+                return JsonResponse({'error': 'Demo user not configured'}, status=404)
+            
+            # Get all responses for the demo user
+            responses = QuestionnaireResponse.objects.filter(
+                user=demo_user,
+                is_complete=True
+            ).order_by('-submitted_at')
+            
+            # Pagination
+            page = int(request.GET.get('page', 1))
+            page_size = 10
+            start = (page - 1) * page_size
+            end = start + page_size
+            
+            total_count = responses.count()
+            page_responses = responses[start:end]
+            
+            data = []
+            for response in page_responses:
+                item = {
+                    'id': str(response.id),
+                    'submitted_at': response.submitted_at.isoformat(),
+                    'review': response.review[:100] + '...' if response.review else 'No review',
+                    'sentiment': 'N/A',
+                    'confidence': 0
+                }
+                
+                try:
+                    analysis = response.sentiment_analysis
+                    item['sentiment'] = analysis.sentiment_label
+                    item['confidence'] = analysis.confidence
+                except SentimentAnalysis.DoesNotExist:
+                    pass
+                    
+                data.append(item)
+            
+            return JsonResponse({
+                'count': total_count,
+                'results': data,
+                'total_pages': (total_count + page_size - 1) // page_size
+            })
+            
+        except Exception as e:
+            logger.error(f"Public results failed: {e}")
+            return JsonResponse({'error': str(e)}, status=500)
