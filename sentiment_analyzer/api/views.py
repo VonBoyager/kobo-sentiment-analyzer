@@ -510,11 +510,39 @@ class DashboardStatsView(APIView):
                     sentiment_breakdown[label] = item['count']
             
             total_sentiment = sum(sentiment_breakdown.values())
+            # Convert counts to percentages, but keep original if needed
+            # For the pie chart, we need either counts or percentages, Recharts handles both
+            # but sticking to percentages as frontend expects
             if total_sentiment > 0:
                 sentiment_breakdown = {
-                    k: round((v / total_sentiment) * 100, 1) 
+                    k: round((v / total_sentiment) * 100, 1)
                     for k, v in sentiment_breakdown.items()
                 }
+            else:
+                # If no sentiments found yet (e.g. not analyzed), try to infer from section scores
+                # This is a fallback for data that might be missing SentimentAnalysis
+                logger.info("No sentiment analysis found, inferring from scores")
+                positive_count = 0
+                negative_count = 0
+                neutral_count = 0
+                
+                for response in responses:
+                    avg_score = response.section_scores.aggregate(avg=Avg('average_score'))['avg']
+                    if avg_score:
+                        if avg_score >= 4.0:
+                            positive_count += 1
+                        elif avg_score <= 2.5:
+                            negative_count += 1
+                        else:
+                            neutral_count += 1
+                
+                total_inferred = positive_count + negative_count + neutral_count
+                if total_inferred > 0:
+                    sentiment_breakdown = {
+                        'positive': round((positive_count / total_inferred) * 100, 1),
+                        'negative': round((negative_count / total_inferred) * 100, 1),
+                        'neutral': round((neutral_count / total_inferred) * 100, 1)
+                    }
             
             # Company Performance (section averages)
             section_performance = []
@@ -594,41 +622,69 @@ class DashboardStatsView(APIView):
                 logger.warning(f"Error generating insights: {e}")
                 # Return empty insights if generation fails
             
-            # Sentiment trend by quarters (based on review_date from CSV)
-            # Use efficient database aggregation instead of Python loops
+            # Sentiment trend by quarters
+            # Improved robust calculation that handles missing SentimentAnalysis
             sentiment_trend = []
             
             try:
-                # Get all responses with dates and their sentiment analyses
-                all_responses = responses.filter(submitted_at__isnull=False)
+                # Get all responses with dates
+                all_responses = responses.filter(submitted_at__isnull=False).order_by('submitted_at')
                 
                 if all_responses.exists():
-                    from django.db.models import Case, When, IntegerField, CharField
-                    from django.db.models.functions import Concat, Cast, ExtractYear
+                    from django.db.models import Case, When, IntegerField, F
+                    from django.db.models.functions import ExtractYear, ExtractMonth
                     
-                    # Annotate sentiment analyses with year and quarter from their responses
-                    # This is more efficient than looping through responses
-                    quarter_sentiments = SentimentAnalysis.objects.filter(
-                        response__in=all_responses
-                    ).annotate(
-                        year=ExtractYear('response__submitted_at'),
+                    # Group by Year-Quarter
+                    # We can't easily join with SentimentAnalysis if it doesn't exist for some records
+                    # So we'll iterate through responses and bucket them manually or use a more robust query
+                    
+                    # Calculate quarter for each response
+                    responses_with_quarter = all_responses.annotate(
+                        year=ExtractYear('submitted_at'),
+                        month=ExtractMonth('submitted_at'),
                         quarter=Case(
-                            When(response__submitted_at__month__lte=3, then=1),
-                            When(response__submitted_at__month__lte=6, then=2),
-                            When(response__submitted_at__month__lte=9, then=3),
+                            When(month__lte=3, then=1),
+                            When(month__lte=6, then=2),
+                            When(month__lte=9, then=3),
                             default=4,
                             output_field=IntegerField()
                         )
-                    ).values('year', 'quarter').annotate(
-                        avg_score=Avg('compound_score')
-                    ).order_by('year', 'quarter')
+                    )
                     
-                    # Build trend list from aggregated data
-                    for item in quarter_sentiments:
+                    # Use a dictionary to aggregate scores by quarter
+                    quarter_scores = defaultdict(list)
+                    
+                    for resp in responses_with_quarter:
+                        key = f"{resp.year}-Q{resp.quarter}"
+                        
+                        # Try to get sentiment score, otherwise fallback to section average mapped to -1..1
+                        score = 0.0
+                        try:
+                            # Check for pre-fetched or related sentiment analysis
+                            if hasattr(resp, 'sentiment_analysis'):
+                                score = resp.sentiment_analysis.compound_score
+                            else:
+                                # Fallback: Map 1-5 rating to -1 to 1 compound score
+                                # 5 -> 1.0, 3 -> 0.0, 1 -> -1.0
+                                avg_section_score = resp.section_scores.aggregate(avg=Avg('average_score'))['avg']
+                                if avg_section_score:
+                                    # Normalize 1-5 to -1-1: (x - 3) / 2
+                                    score = (avg_section_score - 3.0) / 2.0
+                        except Exception:
+                            score = 0.0
+                            
+                        quarter_scores[key].append(score)
+                    
+                    # Calculate averages and format for frontend
+                    sorted_quarters = sorted(quarter_scores.keys())
+                    for q in sorted_quarters:
+                        scores = quarter_scores[q]
+                        avg = sum(scores) / len(scores) if scores else 0
                         sentiment_trend.append({
-                            'month': f"{item['year']}-Q{item['quarter']}",
-                            'avg_score': round(item['avg_score'] or 0, 2)
+                            'month': q,
+                            'avg_score': round(avg, 2)
                         })
+                        
             except Exception as e:
                 logger.error(f"Error calculating sentiment trend: {e}", exc_info=True)
                 sentiment_trend = []
