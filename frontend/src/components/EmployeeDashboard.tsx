@@ -1,16 +1,52 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ClipboardList, CheckCircle, Clock, Calendar, Sparkles, Shield, TrendingUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
-const submissionHistory = [
-  { id: 1, date: '2024-11-15', status: 'completed', quarter: 'Q4 2024' },
-  { id: 2, date: '2024-08-20', status: 'completed', quarter: 'Q3 2024' },
-  { id: 3, date: '2024-05-10', status: 'completed', quarter: 'Q2 2024' },
-];
+interface Submission {
+  id: number;
+  date: string;
+  status: string;
+  quarter: string;
+}
 
 export function EmployeeDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [submissionHistory, setSubmissionHistory] = useState<Submission[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        const response = await fetch('/api/questionnaire-responses/');
+        if (response.ok) {
+          const data = await response.json();
+          const formattedData = data
+            .filter((item: any) => item.is_complete)
+            .map((item: any) => {
+              const date = new Date(item.submitted_at);
+              const quarter = Math.ceil((date.getMonth() + 1) / 3);
+              return {
+                id: item.id,
+                date: date.toISOString().split('T')[0],
+                status: 'completed',
+                quarter: `Q${quarter} ${date.getFullYear()}`
+              };
+            })
+            .sort((a: Submission, b: Submission) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          
+          setSubmissionHistory(formattedData);
+        }
+      } catch (error) {
+        console.error('Error fetching submissions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubmissions();
+  }, []);
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -24,9 +60,9 @@ export function EmployeeDashboard() {
               <Sparkles className="w-5 h-5 text-blue-400" />
               <span className="text-sm text-blue-300 uppercase tracking-wider">Employee Dashboard</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl mb-3">Welcome, {user?.name}!</h1>
+            <h1 className="text-3xl sm:text-4xl mb-3">Welcome, {user?.username}!</h1>
             <p className="text-slate-300 text-base sm:text-lg max-w-2xl">
-              Your feedback helps us create a better workplace for everyone. 
+              Your feedback helps us create a better workplace for everyone.
               <span className="text-blue-400 font-semibold"> Anonymous & confidential.</span>
             </p>
           </div>
@@ -59,21 +95,27 @@ export function EmployeeDashboard() {
             <Calendar className="w-5 h-5 text-blue-400" />
             <h2 className="text-xl text-white">Submission History</h2>
           </div>
-          <div className="space-y-3">
-            {submissionHistory.map((submission) => (
-              <div key={submission.id} className="flex items-center justify-between p-4 bg-gray-700/50 rounded-xl border border-gray-600">
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-emerald-400" />
-                  <div>
-                    <div className="text-sm font-medium text-white">{submission.quarter}</div>
-                    <div className="text-xs text-gray-400">{submission.date}</div>
+          <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+            {loading ? (
+              <div className="text-center text-gray-400 py-4">Loading history...</div>
+            ) : submissionHistory.length > 0 ? (
+              submissionHistory.map((submission) => (
+                <div key={submission.id} className="flex items-center justify-between p-4 bg-gray-700/50 rounded-xl border border-gray-600">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-emerald-400" />
+                    <div>
+                      <div className="text-sm font-medium text-white">{submission.quarter}</div>
+                      <div className="text-xs text-gray-400">{submission.date}</div>
+                    </div>
                   </div>
+                  <span className="px-3 py-1 bg-emerald-900/30 text-emerald-300 text-xs font-medium rounded-lg border border-emerald-800">
+                    {submission.status}
+                  </span>
                 </div>
-                <span className="px-3 py-1 bg-emerald-900/30 text-emerald-300 text-xs font-medium rounded-lg border border-emerald-800">
-                  {submission.status}
-                </span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-center text-gray-400 py-4">No submissions yet</div>
+            )}
           </div>
         </div>
 

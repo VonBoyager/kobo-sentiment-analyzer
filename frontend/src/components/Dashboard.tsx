@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ClipboardList, Upload, Brain, TrendingUp, TrendingDown, Sparkles, Loader2 } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, Tooltip, XAxis } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, Tooltip, ReferenceDot, Label } from 'recharts';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -26,6 +26,12 @@ interface SentimentTrend {
   avg_score: number;
 }
 
+interface UserSubmission {
+  date: string;
+  quarter: string;
+  review: string;
+}
+
 interface DashboardData {
   total_responses: number;
   sentiment_breakdown: SentimentBreakdown;
@@ -35,6 +41,7 @@ interface DashboardData {
     weaknesses: Insight[];
   };
   sentiment_trend: SentimentTrend[];
+  user_latest_submission?: UserSubmission;
 }
 
 export function Dashboard() {
@@ -139,7 +146,7 @@ export function Dashboard() {
     return <div className="text-center p-8 text-white">No data available</div>;
   }
 
-  const { total_responses, sentiment_breakdown, company_performance, generated_insights, sentiment_trend } = data;
+  const { total_responses, sentiment_breakdown, company_performance, generated_insights, sentiment_trend, user_latest_submission } = data;
 
   const totalSentiments = (sentiment_breakdown?.positive || 0) + (sentiment_breakdown?.neutral || 0) + (sentiment_breakdown?.negative || 0);
 
@@ -183,6 +190,9 @@ export function Dashboard() {
     };
     changeLabel = `${percentageChange.isPositive ? '+' : ''}${percentChange.toFixed(1)}%`;
   }
+
+  // Find user submission point for the chart
+  const userSubmissionPoint = user_latest_submission && trendData.find(d => d.month === user_latest_submission.quarter);
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -329,9 +339,34 @@ export function Dashboard() {
                   }}
                   formatter={(value: number) => [`${value.toFixed(2)}`, 'Avg Score']}
                 />
+                {userSubmissionPoint && (
+                  <ReferenceDot
+                    x={userSubmissionPoint.month}
+                    y={userSubmissionPoint.score}
+                    r={6}
+                    fill="#3b82f6"
+                    stroke="#1f2937"
+                    strokeWidth={2}
+                    isFront={true}
+                  >
+                    <Label
+                      value="You"
+                      position="top"
+                      offset={10}
+                      fill="#3b82f6"
+                      fontSize={12}
+                      fontWeight="bold"
+                    />
+                  </ReferenceDot>
+                )}
               </LineChart>
             </ResponsiveContainer>
           </div>
+          {user_latest_submission && (
+            <div className="mt-2 text-xs text-blue-400 text-center font-medium">
+              Your latest submission: {new Date(user_latest_submission.date).toLocaleDateString()} ({user_latest_submission.quarter})
+            </div>
+          )}
           {percentageChange && (
             <div className="mt-2 text-xs text-gray-500 text-center">
               {percentageChange.previousLabel}: {percentageChange.previous.toFixed(2)} → {percentageChange.currentLabel}: {percentageChange.current.toFixed(2)}

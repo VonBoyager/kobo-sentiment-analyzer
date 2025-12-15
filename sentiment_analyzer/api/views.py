@@ -689,6 +689,25 @@ class DashboardStatsView(APIView):
                 logger.error(f"Error calculating sentiment trend: {e}", exc_info=True)
                 sentiment_trend = []
             
+            # Identify user's latest submission for highlighting on the trend chart
+            user_latest_submission = None
+            if hasattr(request, 'user') and request.user.is_authenticated and not request.user.is_staff:
+                latest_response = QuestionnaireResponse.objects.filter(
+                    user=request.user,
+                    is_complete=True
+                ).order_by('-submitted_at').first()
+                
+                if latest_response and latest_response.submitted_at:
+                    month = latest_response.submitted_at.month
+                    quarter_num = (month - 1) // 3 + 1
+                    quarter_str = f"{latest_response.submitted_at.year}-Q{quarter_num}"
+                    
+                    user_latest_submission = {
+                        'date': latest_response.submitted_at.date().isoformat(),
+                        'quarter': quarter_str,
+                        'review': latest_response.review[:50] + '...' if latest_response.review else 'No review'
+                    }
+
             return Response({
                 'total_responses': total_responses,
                 'sentiment_breakdown': sentiment_breakdown,
@@ -697,7 +716,8 @@ class DashboardStatsView(APIView):
                     'strengths': strengths,
                     'weaknesses': weaknesses
                 },
-                'sentiment_trend': sentiment_trend
+                'sentiment_trend': sentiment_trend,
+                'user_latest_submission': user_latest_submission
             })
         except Exception as e:
             logger.error(f"Error in DashboardStatsView: {e}", exc_info=True)
