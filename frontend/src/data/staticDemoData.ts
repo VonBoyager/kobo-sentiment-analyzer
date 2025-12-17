@@ -26,41 +26,28 @@ export const STATIC_DASHBOARD_DATA = {
     { month: '2024-02', avg_score: 3.4 },
     { month: '2024-03', avg_score: 3.1 },
     { month: '2024-04', avg_score: 3.5 },
-  ],
+  ]
 };
 
 export const STATIC_RESULTS_DATA = {
-  count: 5,
-  results: [
-    {
-      id: "1",
-      submitted_at: "2024-04-15T10:30:00Z",
-      review: "Great work environment and supportive team. I really enjoy coming to work every day.",
-      sentiment: "positive"
-    },
-    {
-      id: "2",
-      submitted_at: "2024-04-14T14:20:00Z",
-      review: "The workload is manageable, but the benefits package could be better compared to other companies.",
-      sentiment: "neutral"
-    },
-    {
-      id: "3",
-      submitted_at: "2024-04-12T09:15:00Z",
-      review: "I feel undervalued and the management does not listen to our feedback.",
-      sentiment: "negative"
-    },
-    {
-      id: "4",
-      submitted_at: "2024-04-10T16:45:00Z",
-      review: "Fantastic company culture! The regular team building events are a blast.",
-      sentiment: "positive"
-    },
-    {
-      id: "5",
-      submitted_at: "2024-04-08T11:00:00Z",
-      review: "Communication from upper management is often unclear and causes confusion.",
-      sentiment: "negative"
-    }
+  overall_company_score: 4.15,
+  section_importance: [
+    { section: "Management", importance: 0.35, sample_size: 1250 },
+    { section: "Culture", importance: 0.25, sample_size: 1250 },
+    { section: "Compensation", importance: 0.20, sample_size: 1250 },
+    { section: "Work-Life Balance", importance: 0.15, sample_size: 1250 },
+    { section: "Career Growth", importance: 0.05, sample_size: 1250 }
+  ],
+  trending_words: [
+    { word: "Supportive", count: 120, sentiment: "positive", sentiment_ratio: 0.9, positive_count: 108, negative_count: 2, neutral_count: 10 },
+    { word: "Flexible", count: 95, sentiment: "positive", sentiment_ratio: 0.85, positive_count: 80, negative_count: 5, neutral_count: 10 },
+    { word: "Salary", count: 85, sentiment: "neutral", sentiment_ratio: 0.4, positive_count: 20, negative_count: 30, neutral_count: 35 },
+    { word: "Overtime", count: 70, sentiment: "negative", sentiment_ratio: 0.2, positive_count: 5, negative_count: 55, neutral_count: 10 },
+    { word: "Team", count: 150, sentiment: "positive", sentiment_ratio: 0.95, positive_count: 140, negative_count: 2, neutral_count: 8 },
+    { word: "Benefits", count: 60, sentiment: "neutral", sentiment_ratio: 0.5, positive_count: 20, negative_count: 20, neutral_count: 20 },
+    { word: "Communication", count: 90, sentiment: "negative", sentiment_ratio: 0.3, positive_count: 15, negative_count: 60, neutral_count: 15 },
+    { word: "Growth", count: 50, sentiment: "positive", sentiment_ratio: 0.8, positive_count: 35, negative_count: 5, neutral_count: 10 },
+    { word: "Tools", count: 40, sentiment: "neutral", sentiment_ratio: 0.6, positive_count: 15, negative_count: 10, neutral_count: 15 },
+    { word: "Management", count: 110, sentiment: "positive", sentiment_ratio: 0.75, positive_count: 70, negative_count: 20, neutral_count: 20 }
   ]
 };
