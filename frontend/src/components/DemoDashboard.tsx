@@ -34,8 +34,6 @@ interface DashboardData {
     weaknesses: Insight[];
   };
   sentiment_trend: SentimentTrend[];
-  positive_correlations?: any[];
-  negative_correlations?: any[];
 }
 
 export function DemoDashboard() {
@@ -72,7 +70,7 @@ export function DemoDashboard() {
     return <div className="text-center p-8 text-white">No data available</div>;
   }
 
-  const { total_responses, sentiment_breakdown } = data;
+  const { total_responses, sentiment_breakdown, company_performance, generated_insights } = data;
 
   const totalSentiments = (sentiment_breakdown?.positive || 0) + (sentiment_breakdown?.neutral || 0) + (sentiment_breakdown?.negative || 0);
 
@@ -82,7 +80,15 @@ export function DemoDashboard() {
     { name: 'Negative', value: totalSentiments > 0 ? ((sentiment_breakdown.negative / totalSentiments) * 100) : 0, color: '#ef4444' }
   ];
 
-  const trendData = data.sentiment_trend;
+  const trendData = data.sentiment_trend.map(d => ({
+    ...d,
+    // Add label for tooltip if needed, similar to Dashboard.tsx
+    label: d.month.replace('-', ' ')
+  }));
+
+  // Calculate strengths and weaknesses based on score
+  const strengths = company_performance?.filter(p => p.average_score >= 4.0) || [];
+  const weaknesses = company_performance?.filter(p => p.average_score < 3.0) || [];
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -203,50 +209,104 @@ export function DemoDashboard() {
                     <Line type="monotone" dataKey="avg_score" stroke="#3b82f6" strokeWidth={3} dot={true} strokeLinecap="round" />
                     <Tooltip 
                     contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px', color: '#f3f4f6' }}
+                    labelFormatter={(value) => `Quarter: ${value}`}
+                    formatter={(value: number) => [`${value.toFixed(2)}`, 'Avg Score']}
                     />
                 </LineChart>
                 </ResponsiveContainer>
             </div>
             </div>
 
-            {/* Correlations - Using data from public API if available */}
-            {data.positive_correlations && data.positive_correlations.length > 0 && (
-                <div className="sm:col-span-2 lg:col-span-6 bg-gray-800 rounded-2xl p-6 border border-gray-700">
-                    <div className="text-xs uppercase tracking-wider text-gray-400 mb-4">Top Positive Correlations</div>
-                    <div className="space-y-3">
-                        {data.positive_correlations.map((corr: any, idx: number) => (
-                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
-                                <div>
-                                    <div className="text-sm font-medium text-white">{corr.section_name}</div>
-                                    <div className="text-xs text-gray-400">{corr.topic_name}</div>
-                                </div>
-                                <div className="text-emerald-400 font-bold text-sm">
-                                    +{(corr.correlation_score * 100).toFixed(0)}%
-                                </div>
-                            </div>
-                        ))}
+            {/* Company Performance - Shows numerical ratings */}
+            <div className="sm:col-span-2 lg:col-span-7 bg-gray-800 rounded-2xl p-6 sm:p-7 border border-gray-700">
+                <div className="text-xs uppercase tracking-wider text-gray-400 mb-5">Company Performance</div>
+                <div className="space-y-5">
+                <div>
+                    <div className="flex items-center gap-2 mb-3">
+                    <TrendingUp className="w-4 h-4 text-emerald-400" />
+                    <span className="text-sm font-semibold text-gray-300">Strengths</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                    {strengths.length > 0 ? strengths.map(s => (
+                        <div key={s.section_name} className="px-4 py-2.5 bg-emerald-900/20 text-emerald-300 rounded-xl border border-emerald-800 text-sm font-medium">
+                        {s.section_name}: {s.average_score.toFixed(2)}/5.0
+                        </div>
+                    )) : (
+                        <div className="text-gray-400 text-sm">No strengths identified yet</div>
+                    )}
                     </div>
                 </div>
-            )}
-            
-            {data.negative_correlations && data.negative_correlations.length > 0 && (
-                <div className="sm:col-span-2 lg:col-span-6 bg-gray-800 rounded-2xl p-6 border border-gray-700">
-                    <div className="text-xs uppercase tracking-wider text-gray-400 mb-4">Top Negative Correlations</div>
-                    <div className="space-y-3">
-                        {data.negative_correlations.map((corr: any, idx: number) => (
-                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
-                                <div>
-                                    <div className="text-sm font-medium text-white">{corr.section_name}</div>
-                                    <div className="text-xs text-gray-400">{corr.topic_name}</div>
-                                </div>
-                                <div className="text-red-400 font-bold text-sm">
-                                    {(corr.correlation_score * 100).toFixed(0)}%
-                                </div>
-                            </div>
-                        ))}
+                <div>
+                    <div className="flex items-center gap-2 mb-3">
+                    <TrendingDown className="w-4 h-4 text-red-400" />
+                    <span className="text-sm font-semibold text-gray-300">Areas for Improvement</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                    {weaknesses.length > 0 ? weaknesses.map(w => (
+                        <div key={w.section_name} className="px-4 py-2.5 bg-red-900/20 text-red-300 rounded-xl border border-red-800 text-sm font-medium">
+                        {w.section_name}: {w.average_score.toFixed(2)}/5.0
+                        </div>
+                    )) : (
+                        <div className="text-gray-400 text-sm">No areas for improvement identified yet</div>
+                    )}
                     </div>
                 </div>
-            )}
+                {/* All sections with numerical ratings */}
+                {company_performance && company_performance.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-700">
+                    <div className="text-xs uppercase tracking-wider text-gray-400 mb-3">All Categories</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {company_performance.map(perf => (
+                        <div key={perf.section_name} className="flex items-center justify-between px-3 py-2 bg-gray-700/50 rounded-lg">
+                            <span className="text-sm text-gray-300">{perf.section_name}</span>
+                            <span className="text-sm font-semibold text-white">{perf.average_score.toFixed(2)}/5.0</span>
+                        </div>
+                        ))}
+                    </div>
+                    </div>
+                )}
+                </div>
+            </div>
+
+            {/* Generated Insights */}
+            <div className="sm:col-span-2 lg:col-span-5 bg-gradient-to-br from-blue-900/20 to-indigo-900/20 rounded-2xl p-6 sm:p-7 border border-blue-800">
+                <div className="flex items-center gap-2 mb-5">
+                <Sparkles className="w-4 h-4 text-blue-400" />
+                <div className="text-xs uppercase tracking-wider text-blue-300">Generated Insights</div>
+                </div>
+                <div className="space-y-2.5 max-h-72 overflow-y-auto pr-2">
+                {generated_insights?.strengths && generated_insights.strengths.length > 0 ? (
+                    generated_insights.strengths.map((insight, index) => (
+                    <div key={`s-${index}`} className="p-4 bg-gray-800 rounded-xl border border-gray-700 text-sm hover:shadow-sm transition-shadow">
+                        <div className="flex gap-3">
+                        <span className="text-lg flex-shrink-0">🟢</span>
+                        <p className="text-gray-300 leading-relaxed">
+                            <strong>{insight.section}:</strong> praised for "{insight.keywords?.join(', ') || 'positive feedback'}".
+                        </p>
+                        </div>
+                    </div>
+                    ))
+                ) : (
+                    <div className="text-gray-400 text-sm p-4">No strength insights available.</div>
+                )}
+                {generated_insights?.weaknesses && generated_insights.weaknesses.length > 0 ? (
+                    generated_insights.weaknesses.map((insight, index) => (
+                    <div key={`w-${index}`} className="p-4 bg-gray-800 rounded-xl border border-gray-700 text-sm hover:shadow-sm transition-shadow">
+                        <div className="flex gap-3">
+                        <span className="text-lg flex-shrink-0">🔴</span>
+                        <p className="text-gray-300 leading-relaxed">
+                            <strong>{insight.section}:</strong> needs improvement regarding "{insight.keywords?.join(', ') || 'identified areas'}".
+                        </p>
+                        </div>
+                    </div>
+                    ))
+                ) : (
+                    generated_insights?.strengths && generated_insights.strengths.length === 0 && (
+                    <div className="text-gray-400 text-sm p-4">No weakness insights available.</div>
+                    )
+                )}
+                </div>
+            </div>
 
         </div>
         </div>

@@ -42,8 +42,17 @@ interface DashboardData {
   };
   sentiment_trend: SentimentTrend[];
   user_latest_submission?: UserSubmission;
-  confidence_rating?: string;
 }
+
+const LOADING_MESSAGES = [
+  "Preprocessing data...",
+  "Tokenizing text reviews...",
+  "Extracting features...",
+  "Training sentiment classifier...",
+  "Identifying key topics...",
+  "Calculating correlations...",
+  "Generating insights..."
+];
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -53,6 +62,7 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [trainingModels, setTrainingModels] = useState(false);
   const [trainingProgress, setTrainingProgress] = useState<string>('');
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,7 +92,7 @@ export function Dashboard() {
     setTrainingModels(true);
     setShowTrainingModal(true);
     setTrainingPercent(0);
-    setTrainingProgress('Initializing...');
+    setTrainingProgress(LOADING_MESSAGES[0]);
     
     try {
       // 1. Start the training
@@ -95,19 +105,21 @@ export function Dashboard() {
         throw new Error('Failed to start model training');
       }
       
-      // 2. Poll for status
+      // 2. Cycle messages
+      const messageInterval = setInterval(() => {
+        setLoadingMessageIndex(prev => (prev + 1) % LOADING_MESSAGES.length);
+      }, 2000);
+
+      // 3. Poll for status
       const pollInterval = setInterval(async () => {
         try {
           const statusRes = await fetch('/api/ml/training-status/');
           const statusData = await statusRes.json();
           
-          setTrainingPercent(statusData.progress || 0);
-          setTrainingProgress(statusData.message || 'Processing...');
-          
           if (statusData.status === 'completed') {
             clearInterval(pollInterval);
+            clearInterval(messageInterval);
             setTrainingPercent(100);
-            setTrainingProgress('Complete!');
             
             toast.success('Model Training Completed!', {
               description: 'Dashboard insights have been updated.',
@@ -119,6 +131,7 @@ export function Dashboard() {
             }, 1000);
           } else if (statusData.status === 'error') {
             clearInterval(pollInterval);
+            clearInterval(messageInterval);
             throw new Error(statusData.message || 'Training failed');
           }
         } catch (err) {
@@ -147,7 +160,7 @@ export function Dashboard() {
     return <div className="text-center p-8 text-white">No data available</div>;
   }
 
-  const { total_responses, sentiment_breakdown, company_performance, generated_insights, sentiment_trend, user_latest_submission, confidence_rating } = data;
+  const { total_responses, sentiment_breakdown, company_performance, generated_insights, sentiment_trend, user_latest_submission } = data;
 
   const totalSentiments = (sentiment_breakdown?.positive || 0) + (sentiment_breakdown?.neutral || 0) + (sentiment_breakdown?.negative || 0);
 
@@ -259,7 +272,7 @@ export function Dashboard() {
             <div className="font-semibold text-white">Test Models</div>
             {trainingModels && (
               <div className="text-xs text-emerald-400 mt-2">
-                Starting...
+                Running...
               </div>
             )}
           </button>
@@ -269,19 +282,6 @@ export function Dashboard() {
         <div className="sm:col-span-1 lg:col-span-3 bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-md transition-shadow">
           <div className="text-xs uppercase tracking-wider text-gray-400 mb-3">Total Responses</div>
           <div className="text-4xl font-bold text-white mb-2">{total_responses}</div>
-          {confidence_rating && (
-             <div className="flex items-center gap-2 mt-2">
-                <span className={`text-xs px-2 py-1 rounded-full border ${
-                  confidence_rating === 'High'
-                    ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800'
-                    : confidence_rating === 'Medium'
-                    ? 'bg-yellow-900/30 text-yellow-400 border-yellow-800'
-                    : 'bg-red-900/30 text-red-400 border-red-800'
-                }`}>
-                  {confidence_rating} Confidence
-                </span>
-             </div>
-          )}
         </div>
 
         <div className="sm:col-span-1 lg:col-span-5 bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-md transition-shadow">
@@ -493,24 +493,15 @@ export function Dashboard() {
                 <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
               </div>
               
-              <h3 className="text-xl font-bold text-white mb-2">Training AI Models</h3>
+              <h3 className="text-xl font-bold text-white mb-2">Training ML Models</h3>
               <p className="text-gray-400 text-sm mb-8">
                 Please wait while we analyze the data and generate insights. This process may take a few minutes.
               </p>
               
-              {/* Progress Bar */}
-              <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden mb-3">
-                <div
-                  className="h-full bg-blue-500 transition-all duration-500 ease-out rounded-full relative"
-                  style={{ width: `${trainingPercent}%` }}
-                >
-                  <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]"></div>
-                </div>
-              </div>
-              
-              <div className="flex justify-between w-full text-xs">
-                <span className="text-blue-400 font-medium">{trainingProgress}</span>
-                <span className="text-gray-500">{trainingPercent}%</span>
+              <div className="flex items-center justify-center h-12">
+                  <span className="text-blue-400 font-medium animate-pulse text-lg">
+                      {LOADING_MESSAGES[loadingMessageIndex]}
+                  </span>
               </div>
             </div>
           </div>

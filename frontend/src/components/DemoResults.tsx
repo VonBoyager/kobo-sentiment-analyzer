@@ -11,7 +11,6 @@ interface ResultsData {
     submitted_at: string;
     review: string;
     sentiment: string;
-    confidence: number;
   }>;
 }
 
@@ -82,7 +81,7 @@ export function DemoResults() {
                         item.sentiment === 'negative' ? 'bg-red-900/40 text-red-400 border border-red-800' :
                         'bg-yellow-900/40 text-yellow-400 border border-yellow-800'
                       }`}>
-                        {item.sentiment} ({(item.confidence * 100).toFixed(0)}%)
+                        {item.sentiment}
                       </div>
                       <div className="text-xs text-gray-500">
                         {new Date(item.submitted_at).toLocaleDateString()}
