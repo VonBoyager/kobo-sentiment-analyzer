@@ -708,6 +708,13 @@ class DashboardStatsView(APIView):
                         'review': latest_response.review[:50] + '...' if latest_response.review else 'No review'
                     }
 
+            # Calculate confidence rating based on sample size
+            confidence_level = 'Low'
+            if total_responses >= 30:
+                confidence_level = 'High'
+            elif total_responses >= 10:
+                confidence_level = 'Medium'
+
             return Response({
                 'total_responses': total_responses,
                 'sentiment_breakdown': sentiment_breakdown,
@@ -717,7 +724,8 @@ class DashboardStatsView(APIView):
                     'weaknesses': weaknesses
                 },
                 'sentiment_trend': sentiment_trend,
-                'user_latest_submission': user_latest_submission
+                'user_latest_submission': user_latest_submission,
+                'confidence_rating': confidence_level
             })
         except Exception as e:
             logger.error(f"Error in DashboardStatsView: {e}", exc_info=True)

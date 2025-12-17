@@ -1419,6 +1419,13 @@ def _generate_feedback_summary(user, sentiment_dict, total_responses, pipeline=N
             logger.error(f"Error getting section importance: {e}", exc_info=True)
             section_importance = None
     
+    # Calculate confidence rating based on sample size
+    confidence_level = 'Low'
+    if total_responses >= 30:
+        confidence_level = 'High'
+    elif total_responses >= 10:
+        confidence_level = 'Medium'
+    
     return {
         'majority_sentiment': majority_sentiment,
         'message': message,
@@ -1433,7 +1440,9 @@ def _generate_feedback_summary(user, sentiment_dict, total_responses, pipeline=N
             'negative': negative_count,
             'neutral': neutral_count
         },
-        'section_importance': section_importance
+        'section_importance': section_importance,
+        'confidence_rating': confidence_level,
+        'sample_size': total_responses
     }
 
 def _generate_sentiment_forecast(user):
@@ -1452,8 +1461,8 @@ def _generate_sentiment_forecast(user):
     response_count = responses.count()
     logger.info(f"Forecast: Found {response_count} responses in last 90 days")
     
-    if response_count < 10:  # Need at least 10 data points
-        logger.warning(f"Forecast: Not enough data points ({response_count} < 10)")
+    if response_count < 5:  # Need at least 5 data points
+        logger.warning(f"Forecast: Not enough data points ({response_count} < 5)")
         return None
     
     # Create time series data
@@ -1477,7 +1486,7 @@ def _generate_sentiment_forecast(user):
         except:
             continue
     
-    if len(data_points) < 10:
+    if len(data_points) < 5:
         return None
     
     # Convert to DataFrame for easier manipulation

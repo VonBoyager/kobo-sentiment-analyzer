@@ -42,6 +42,7 @@ interface DashboardData {
   };
   sentiment_trend: SentimentTrend[];
   user_latest_submission?: UserSubmission;
+  confidence_rating?: string;
 }
 
 export function Dashboard() {
@@ -146,7 +147,7 @@ export function Dashboard() {
     return <div className="text-center p-8 text-white">No data available</div>;
   }
 
-  const { total_responses, sentiment_breakdown, company_performance, generated_insights, sentiment_trend, user_latest_submission } = data;
+  const { total_responses, sentiment_breakdown, company_performance, generated_insights, sentiment_trend, user_latest_submission, confidence_rating } = data;
 
   const totalSentiments = (sentiment_breakdown?.positive || 0) + (sentiment_breakdown?.neutral || 0) + (sentiment_breakdown?.negative || 0);
 
@@ -268,6 +269,19 @@ export function Dashboard() {
         <div className="sm:col-span-1 lg:col-span-3 bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-md transition-shadow">
           <div className="text-xs uppercase tracking-wider text-gray-400 mb-3">Total Responses</div>
           <div className="text-4xl font-bold text-white mb-2">{total_responses}</div>
+          {confidence_rating && (
+             <div className="flex items-center gap-2 mt-2">
+                <span className={`text-xs px-2 py-1 rounded-full border ${
+                  confidence_rating === 'High'
+                    ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800'
+                    : confidence_rating === 'Medium'
+                    ? 'bg-yellow-900/30 text-yellow-400 border-yellow-800'
+                    : 'bg-red-900/30 text-red-400 border-red-800'
+                }`}>
+                  {confidence_rating} Confidence
+                </span>
+             </div>
+          )}
         </div>
 
         <div className="sm:col-span-1 lg:col-span-5 bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:shadow-md transition-shadow">

@@ -1017,7 +1017,7 @@ class MLPipeline:
             topic_results = self.topic_analyzer.save_analysis(response, response.review)
             
             # Update correlations if we have enough data
-            if QuestionnaireResponse.objects.filter(is_complete=True).count() > 10:
+            if QuestionnaireResponse.objects.filter(is_complete=True).count() > 3:
                 self.correlation_analyzer.train_model()
                 self.correlation_analyzer.save_correlations()
             
@@ -1727,8 +1727,8 @@ class MLPipeline:
             total_responses = all_responses.count()
             logger.info(f"Found {total_responses} complete responses")
             
-            if total_responses < 10:
-                logger.warning(f"Not enough responses for analysis: {total_responses} < 10")
+            if total_responses < 5:
+                logger.warning(f"Not enough responses for analysis: {total_responses} < 5")
                 return None
             
             # Filter to only high overall ratings (>= 4.0)
@@ -1750,8 +1750,8 @@ class MLPipeline:
             high_rating_count = len(responses)
             logger.info(f"Filtered to {high_rating_count} responses with overall rating >= 4.0")
             
-            if high_rating_count < 10:
-                logger.warning(f"Not enough high-rating responses for analysis: {high_rating_count} < 10")
+            if high_rating_count < 3:
+                logger.warning(f"Not enough high-rating responses for analysis: {high_rating_count} < 3")
                 return None
             
             # Prepare data: section scores as features, overall_rating as target
@@ -1825,8 +1825,8 @@ class MLPipeline:
             
             logger.info(f"Prepared {len(X_data)} valid data points for training")
             
-            if len(X_data) < 10:
-                logger.warning(f"Not enough valid data points: {len(X_data)} < 10")
+            if len(X_data) < 5:
+                logger.warning(f"Not enough valid data points: {len(X_data)} < 5")
                 return None
             
             # Convert to numpy arrays
